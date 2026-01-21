@@ -8,6 +8,7 @@
 import { Command } from 'commander';
 import { initCommand } from './commands/init';
 import { migrateCommand } from './commands/migrate';
+import { validateCommand } from './commands/validate';
 import { logger } from './utils/logger';
 
 const program = new Command();
@@ -51,6 +52,29 @@ program
   .action(async (options) => {
     try {
       await migrateCommand(options);
+    } catch (error) {
+      if (error instanceof Error) {
+        logger.error(error.message);
+      } else {
+        logger.error('An unknown error occurred');
+      }
+      process.exit(1);
+    }
+  });
+
+// Validate command
+program
+  .command('validate')
+  .description('Validate .claude/ directory structure and contents')
+  .option('-t, --target-dir <path>', 'Directory to validate (default: current)')
+  .option('--structure-only', 'Only validate structure, skip schema validation')
+  .option('-v, --verbose', 'Verbose output with detailed errors and suggestions')
+  .action(async (options) => {
+    try {
+      const report = await validateCommand(options);
+      if (!report.valid) {
+        process.exit(1);
+      }
     } catch (error) {
       if (error instanceof Error) {
         logger.error(error.message);
