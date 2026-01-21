@@ -70,7 +70,29 @@ System          →  Anthropic defaults (lowest)
 - [Migration Guide](docs/migration.md) — Moving from current config *(coming soon)*
 - [Examples](examples/) — Example configurations *(coming soon)*
 
-## CLI Tool *(Coming Soon)*
+## Development
+
+```bash
+# Install dependencies
+npm install
+
+# Build TypeScript
+npm run build
+
+# Run tests
+npm test
+
+# Watch mode for development
+npm run dev
+
+# Lint code
+npm run lint
+
+# Format code
+npm run format
+```
+
+## CLI Tool *(In Development)*
 
 ```bash
 # Scaffold new structure
@@ -88,7 +110,7 @@ claude-arch show
 
 ## Status
 
-🚧 **Draft** — This is an early proposal for community discussion.
+🚧 **In Development** — Core architecture implementation in progress (Phase 1).
 
 ## Contributing
 
