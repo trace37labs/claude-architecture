@@ -107,14 +107,16 @@
 - **Completed**: 2026-01-21
 - **Commit**: c578a37
 
-#### 4. Build Markdown Parser for Existing CLAUDE.md
+#### 4. Build Markdown Parser for Existing CLAUDE.md ✅
 - **Why**: Need backward compatibility with existing files
 - **What**: Parse CLAUDE.md/AGENTS.md into 5-layer structure
 - **Files**:
-  - `src/parsers/legacy-parser.ts` - Parse old format
-  - `src/parsers/layer-classifier.ts` - Classify content into layers
-- **Tests**: Parse real CLAUDE.md examples, verify classification
-- **Status**: TODO
+  - `src/parsers/legacy-parser.ts` - Parse old format (531 lines)
+  - `src/parsers/layer-classifier.ts` - Classify content into layers (310 lines)
+- **Tests**: 69 unit tests covering parsing and classification (all passing)
+- **Status**: DONE
+- **Completed**: 2026-01-21
+- **Commit**: 9fc770b
 
 #### 5. Implement Precedence Engine
 - **Why**: Core logic for merging configs across scopes with proper precedence
