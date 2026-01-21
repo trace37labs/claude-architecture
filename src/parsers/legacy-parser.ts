@@ -293,7 +293,7 @@ function extractListItems(content: string, pattern: RegExp): string[] {
     }
   }
 
-  return items.length > 0 ? items : undefined;
+  return items;
 }
 
 /**
@@ -408,8 +408,10 @@ function mergeLayers<T extends LayerContent>(
 
   // Merge arrays
   for (const key of Object.keys(merged)) {
-    if (Array.isArray(existing[key]) && Array.isArray(incoming[key])) {
-      merged[key] = [...existing[key], ...incoming[key]];
+    const existingVal = existing[key as keyof LayerContent];
+    const incomingVal = incoming[key as keyof LayerContent];
+    if (Array.isArray(existingVal) && Array.isArray(incomingVal)) {
+      (merged as any)[key] = [...existingVal, ...incomingVal];
     }
   }
 
