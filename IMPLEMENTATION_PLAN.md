@@ -264,15 +264,20 @@
 - **Completed**: 2026-01-21
 - **Commit**: 33ca0ca
 
-#### 13. Package for npm Distribution
+#### 13. Package for npm Distribution ✅
 - **Why**: Make tool installable via `npm install -g claude-arch`
 - **What**: Package configuration, bin scripts, version management
 - **Files**:
-  - Update `package.json` with bin field
-  - `README.md` for npm package
-  - `CHANGELOG.md`
-- **Tests**: Test global install and CLI invocation
-- **Status**: TODO
+  - Updated `package.json` with npm publishing metadata
+  - Enhanced `README.md` with installation and usage guide
+  - Created `CHANGELOG.md` with v0.1.0 release notes
+  - Created `LICENSE` (MIT)
+  - Created `.npmignore` to exclude dev files
+  - Fixed ESM compatibility (.js extensions, NodeNext resolution)
+- **Tests**: CLI and MCP server tested and working
+- **Status**: DONE
+- **Completed**: 2026-01-21
+- **Commit**: ceb8ad5
 
 ---
 
