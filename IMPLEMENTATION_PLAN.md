@@ -132,9 +132,7 @@
   - `tests/unit/engine/resolver.test.ts` - 19 tests for config resolution
 - **Status**: DONE
 - **Completed**: 2026-01-21
-- **Commit**: [next]
-  - Files created but removed due to compilation errors
-  - Next iteration: Implement simpler API matching test expectations first
+- **Commits**: a1fc98e, 27856a8
 
 ---
 
