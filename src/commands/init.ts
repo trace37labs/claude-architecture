@@ -7,7 +7,7 @@
 
 import { promises as fs } from 'fs';
 import path from 'path';
-import { logger } from '../utils/logger';
+import { logger } from '../utils/logger.js';
 
 export interface InitOptions {
   /** Create minimal structure (single files) instead of full structure */

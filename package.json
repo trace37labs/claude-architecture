@@ -3,6 +3,20 @@
   "version": "0.1.0",
   "description": "5-layer configuration system for Claude Code",
   "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
   "engines": {
     "node": ">=18.0.0"
   },
@@ -10,6 +24,14 @@
     "claude-arch": "./dist/cli.js",
     "claude-arch-mcp": "./dist/mcp/server.js"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yourusername/claude-arch.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/claude-arch/issues"
+  },
+  "homepage": "https://github.com/yourusername/claude-arch#readme",
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",

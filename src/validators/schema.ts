@@ -254,8 +254,9 @@ async function validateYAMLFile(
   filepath: string,
   layer: LayerType,
   errors: SchemaError[],
-  warnings: SchemaError[]
+  _warnings: SchemaError[]
 ): Promise<void> {
+  // Note: warnings parameter unused in current implementation
   try {
     const content = await fs.readFile(filepath, 'utf-8');
 
@@ -311,10 +312,6 @@ export function validateLayerSchema(
   content: any
 ): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
-
-  // Suppress unused variable warning for layer parameter
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const _layer = layer;
 
   try {
     switch (layer) {

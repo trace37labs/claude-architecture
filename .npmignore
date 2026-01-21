@@ -1,0 +1,65 @@
+# Source files (we ship dist/ only)
+src/
+tests/
+*.test.ts
+*.spec.ts
+
+# Build artifacts
+tsconfig.json
+tsconfig.*.json
+.tsbuildinfo
+
+# Development tools
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Testing
+coverage/
+.nyc_output/
+vitest.config.ts
+
+# Linting and formatting
+.eslintrc.json
+.prettierrc.json
+.editorconfig
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+.circleci/
+
+# Documentation (keep README and CHANGELOG)
+docs/
+examples/
+specs/
+
+# Project management
+IMPLEMENTATION_PLAN.md
+AGENTS.md
+loop.sh
+.swarm/
+.claude/
+.claude-flow/
+.mcp.json
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# OS
+.DS_Store
+Thumbs.db

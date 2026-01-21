@@ -6,12 +6,12 @@
  */
 
 import { Command } from 'commander';
-import { initCommand } from './commands/init';
-import { migrateCommand } from './commands/migrate';
-import { validateCommand } from './commands/validate';
-import { showCommand } from './commands/show';
-import { doctorCommand } from './commands/doctor';
-import { logger } from './utils/logger';
+import { initCommand } from './commands/init.js';
+import { migrateCommand } from './commands/migrate.js';
+import { validateCommand } from './commands/validate.js';
+import { showCommand } from './commands/show.js';
+import { doctorCommand } from './commands/doctor.js';
+import { logger } from './utils/logger.js';
 
 const program = new Command();
 

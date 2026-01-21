@@ -64,11 +64,100 @@ User            →  ~/.claude/
 System          →  Anthropic defaults (lowest)
 ```
 
+## Installation
+
+Install globally via npm:
+
+```bash
+npm install -g claude-arch
+```
+
+Or use directly with npx:
+
+```bash
+npx claude-arch init
+```
+
+## Quick Start
+
+### 1. Initialize a New Project
+
+```bash
+# Create minimal structure (single files per layer)
+claude-arch init
+
+# Create full structure (subdirectories per layer)
+claude-arch init --full
+```
+
+### 2. Migrate Existing Configuration
+
+```bash
+# Migrate CLAUDE.md and AGENTS.md to new structure
+claude-arch migrate
+
+# Preview migration without writing files
+claude-arch migrate --dry-run
+
+# Force overwrite existing .claude/ directory
+claude-arch migrate --force
+```
+
+### 3. Validate Your Configuration
+
+```bash
+# Validate structure and schemas
+claude-arch validate
+
+# Detailed output
+claude-arch validate --verbose
+```
+
+### 4. View Active Configuration
+
+```bash
+# Show merged configuration
+claude-arch show
+
+# Show with precedence chain
+claude-arch show --precedence
+
+# JSON output
+claude-arch show --json
+```
+
+### 5. Health Check
+
+```bash
+# Run health check with recommendations
+claude-arch doctor
+
+# Show quick wins only
+claude-arch doctor --quick-wins
+
+# JSON output for tooling
+claude-arch doctor --json
+```
+
+## MCP Server Integration
+
+Add to your Claude Code MCP configuration:
+
+```bash
+claude mcp add claude-arch -- npx -y claude-arch-mcp
+```
+
+This exposes 4 tools:
+- `resolve-config` - Get merged configuration
+- `validate-structure` - Check structure compliance
+- `detect-conflicts` - Find configuration conflicts
+- `get-recommendations` - Get improvement suggestions
+
 ## Documentation
 
 - [Full Specification](docs/spec.md) — Complete architecture specification
+- [Examples](examples/) — Example projects demonstrating different patterns
 - [Migration Guide](docs/migration.md) — Moving from current config *(coming soon)*
-- [Examples](examples/) — Example configurations *(coming soon)*
 
 ## Development
 
@@ -92,25 +181,22 @@ npm run lint
 npm run format
 ```
 
-## CLI Tool *(In Development)*
+## Project Status
 
-```bash
-# Scaffold new structure
-claude-arch init
+✅ **Phase 1-3 Complete** — Core implementation finished (v0.1.0)
 
-# Migrate existing config
-claude-arch migrate
+**Completed:**
+- ✅ 5-layer parser and precedence engine
+- ✅ CLI commands (init, migrate, validate, show, doctor)
+- ✅ MCP server integration
+- ✅ 332+ unit tests (all passing)
+- ✅ Example projects
+- ✅ npm package ready
 
-# Validate configuration
-claude-arch validate
-
-# Show active config
-claude-arch show
-```
-
-## Status
-
-🚧 **In Development** — Core architecture implementation in progress (Phase 1).
+**In Progress:**
+- 📝 User documentation
+- 📝 Video tutorials
+- 📝 Community proposal to Anthropic
 
 ## Contributing
 

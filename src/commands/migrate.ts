@@ -7,10 +7,18 @@
 
 import { promises as fs } from 'fs';
 import path from 'path';
-import { logger } from '../utils/logger';
-import { parseLegacyFiles } from '../parsers/legacy-parser';
-import type { LayerContent } from '../types/layers';
-import { LayerType } from '../types/layers';
+import { logger } from '../utils/logger.js';
+import { parseLegacyFiles } from '../parsers/legacy-parser.js';
+import type { LayerContent } from '../types/layers.js';
+import { LayerType } from '../types/layers.js';
+import type {
+  RulesLayer,
+  ToolsLayer,
+  MethodsLayer,
+  KnowledgeLayer,
+  GoalsLayer,
+  MCPServerConfig,
+} from '../types/layers.js';
 
 export interface MigrateOptions {
   /** Source directory containing CLAUDE.md and/or AGENTS.md (default: current directory) */
@@ -339,77 +347,89 @@ function formatLayerContent(layerType: LayerType, content: LayerContent | undefi
 
   // Add layer-specific structured content
   switch (layerType) {
-    case LayerType.Rules:
-      if (content.forbidden && content.forbidden.length > 0) {
+    case LayerType.Rules: {
+      const rulesContent = content as RulesLayer;
+      if (rulesContent.forbidden && rulesContent.forbidden.length > 0) {
         sections.push('## Forbidden Actions');
-        content.forbidden.forEach((item) => sections.push(`- ${item}`));
+        rulesContent.forbidden.forEach((item: string) => sections.push(`- ${item}`));
         sections.push('');
       }
-      if (content.required && content.required.length > 0) {
+      if (rulesContent.required && rulesContent.required.length > 0) {
         sections.push('## Required Actions');
-        content.required.forEach((item) => sections.push(`- ${item}`));
+        rulesContent.required.forEach((item: string) => sections.push(`- ${item}`));
         sections.push('');
       }
-      if (content.security && content.security.length > 0) {
+      if (rulesContent.security && rulesContent.security.length > 0) {
         sections.push('## Security');
-        content.security.forEach((item) => sections.push(`- ${item}`));
+        rulesContent.security.forEach((item: string) => sections.push(`- ${item}`));
         sections.push('');
       }
       break;
+    }
 
-    case LayerType.Tools:
-      if (content.mcpServers && content.mcpServers.length > 0) {
+    case LayerType.Tools: {
+      const toolsContent = content as ToolsLayer;
+      if (toolsContent.mcpServers && toolsContent.mcpServers.length > 0) {
         sections.push('## MCP Servers');
-        content.mcpServers.forEach((server: any) => {
+        toolsContent.mcpServers.forEach((server: MCPServerConfig) => {
           sections.push(`### ${server.name}`);
           sections.push(`- Command: ${server.command}`);
-          sections.push(`- Args: ${server.args.join(' ')}`);
+          if (server.args) {
+            sections.push(`- Args: ${server.args.join(' ')}`);
+          }
           sections.push('');
         });
       }
       break;
+    }
 
-    case LayerType.Methods:
-      if (content.workflows) {
+    case LayerType.Methods: {
+      const methodsContent = content as MethodsLayer;
+      if (methodsContent.workflows) {
         sections.push('## Workflows');
-        for (const [name, workflow] of Object.entries(content.workflows)) {
+        for (const [name, workflow] of Object.entries(methodsContent.workflows)) {
           sections.push(`### ${name}`);
           sections.push(JSON.stringify(workflow, null, 2));
           sections.push('');
         }
       }
-      if (content.bestPractices && content.bestPractices.length > 0) {
+      if (methodsContent.bestPractices && methodsContent.bestPractices.length > 0) {
         sections.push('## Best Practices');
-        content.bestPractices.forEach((item) => sections.push(`- ${item}`));
+        methodsContent.bestPractices.forEach((item: string) => sections.push(`- ${item}`));
         sections.push('');
       }
       break;
+    }
 
-    case LayerType.Knowledge:
-      if (content.overview) {
+    case LayerType.Knowledge: {
+      const knowledgeContent = content as KnowledgeLayer;
+      if (knowledgeContent.overview) {
         sections.push('## Overview');
-        sections.push(content.overview);
+        sections.push(knowledgeContent.overview);
         sections.push('');
       }
-      if (content.architecture) {
+      if (knowledgeContent.architecture) {
         sections.push('## Architecture');
-        sections.push(content.architecture);
+        sections.push(knowledgeContent.architecture);
         sections.push('');
       }
       break;
+    }
 
-    case LayerType.Goals:
-      if (content.current) {
+    case LayerType.Goals: {
+      const goalsContent = content as GoalsLayer;
+      if (goalsContent.current) {
         sections.push('## Current Goal');
-        sections.push(content.current);
+        sections.push(goalsContent.current);
         sections.push('');
       }
-      if (content.priorities && content.priorities.length > 0) {
+      if (goalsContent.priorities && goalsContent.priorities.length > 0) {
         sections.push('## Priorities');
-        content.priorities.forEach((item) => sections.push(`- ${item}`));
+        goalsContent.priorities.forEach((item: string) => sections.push(`- ${item}`));
         sections.push('');
       }
       break;
+    }
   }
 
   sections.push('---');
@@ -439,10 +459,11 @@ function extractSecurityRules(rules: LayerContent | undefined): string {
   if (!rules) return '# Security Rules\n\nNo security rules found during migration.\n';
 
   const sections: string[] = ['# Security Rules', ''];
+  const rulesContent = rules as RulesLayer;
 
-  if (rules.security && rules.security.length > 0) {
+  if (rulesContent.security && rulesContent.security.length > 0) {
     sections.push('## Security Requirements');
-    rules.security.forEach((item) => sections.push(`- ${item}`));
+    rulesContent.security.forEach((item: string) => sections.push(`- ${item}`));
     sections.push('');
   }
 
@@ -483,10 +504,11 @@ function extractProcessRules(rules: LayerContent | undefined): string {
   if (!rules) return '# Process Rules\n\nNo process rules found during migration.\n';
 
   const sections: string[] = ['# Process Rules', ''];
+  const rulesContent = rules as RulesLayer;
 
-  if (rules.required && rules.required.length > 0) {
+  if (rulesContent.required && rulesContent.required.length > 0) {
     sections.push('## Required Processes');
-    rules.required.forEach((item) => sections.push(`- ${item}`));
+    rulesContent.required.forEach((item: string) => sections.push(`- ${item}`));
     sections.push('');
   }
 
@@ -505,7 +527,8 @@ function extractProcessRules(rules: LayerContent | undefined): string {
 }
 
 function extractMCPTools(tools: LayerContent | undefined): string {
-  if (!tools || !tools.mcpServers || tools.mcpServers.length === 0) {
+  const toolsContent = tools as ToolsLayer | undefined;
+  if (!toolsContent || !toolsContent.mcpServers || toolsContent.mcpServers.length === 0) {
     return `# MCP Servers Configuration
 
 # No MCP servers found during migration
@@ -520,10 +543,12 @@ function extractMCPTools(tools: LayerContent | undefined): string {
 
   const sections: string[] = ['# MCP Servers Configuration', '', 'servers:'];
 
-  tools.mcpServers.forEach((server: any) => {
+  toolsContent.mcpServers.forEach((server: MCPServerConfig) => {
     sections.push(`  ${server.name}:`);
     sections.push(`    command: ${server.command}`);
-    sections.push(`    args: [${server.args.map((a: string) => `'${a}'`).join(', ')}]`);
+    if (server.args) {
+      sections.push(`    args: [${server.args.map((a: string) => `'${a}'`).join(', ')}]`);
+    }
   });
 
   return sections.join('\n');
@@ -549,9 +574,10 @@ function extractWorkflows(methods: LayerContent | undefined): string {
   if (!methods) return '# Workflows\n\nNo workflows found during migration.\n';
 
   const sections: string[] = ['# Workflows', ''];
+  const methodsContent = methods as MethodsLayer;
 
-  if (methods.workflows) {
-    for (const [name, workflow] of Object.entries(methods.workflows)) {
+  if (methodsContent.workflows) {
+    for (const [name, workflow] of Object.entries(methodsContent.workflows)) {
       sections.push(`## ${name}`);
       sections.push(JSON.stringify(workflow, null, 2));
       sections.push('');
@@ -576,10 +602,11 @@ function extractPatterns(methods: LayerContent | undefined): string {
   if (!methods) return '# Patterns\n\nNo patterns found during migration.\n';
 
   const sections: string[] = ['# Patterns', ''];
+  const methodsContent = methods as MethodsLayer;
 
-  if (methods.bestPractices && methods.bestPractices.length > 0) {
+  if (methodsContent.bestPractices && methodsContent.bestPractices.length > 0) {
     sections.push('## Best Practices');
-    methods.bestPractices.forEach((item) => sections.push(`- ${item}`));
+    methodsContent.bestPractices.forEach((item: string) => sections.push(`- ${item}`));
     sections.push('');
   }
 
@@ -601,9 +628,10 @@ function extractOverview(knowledge: LayerContent | undefined): string {
   if (!knowledge) return '# Project Overview\n\nNo overview found during migration.\n';
 
   const sections: string[] = ['# Project Overview', ''];
+  const knowledgeContent = knowledge as KnowledgeLayer;
 
-  if (knowledge.overview) {
-    sections.push(knowledge.overview);
+  if (knowledgeContent.overview) {
+    sections.push(knowledgeContent.overview);
     sections.push('');
   }
 
@@ -625,9 +653,10 @@ function extractArchitecture(knowledge: LayerContent | undefined): string {
   if (!knowledge) return '# Architecture\n\nNo architecture information found during migration.\n';
 
   const sections: string[] = ['# Architecture', ''];
+  const knowledgeContent = knowledge as KnowledgeLayer;
 
-  if (knowledge.architecture) {
-    sections.push(knowledge.architecture);
+  if (knowledgeContent.architecture) {
+    sections.push(knowledgeContent.architecture);
     sections.push('');
   }
 
@@ -649,15 +678,16 @@ function extractCurrentGoals(goals: LayerContent | undefined): string {
   if (!goals) return '# Current Goals\n\nNo current goals found during migration.\n';
 
   const sections: string[] = ['# Current Goals', ''];
+  const goalsContent = goals as GoalsLayer;
 
-  if (goals.current) {
-    sections.push(goals.current);
+  if (goalsContent.current) {
+    sections.push(goalsContent.current);
     sections.push('');
   }
 
-  if (goals.priorities && goals.priorities.length > 0) {
+  if (goalsContent.priorities && goalsContent.priorities.length > 0) {
     sections.push('## Priorities');
-    goals.priorities.forEach((item) => sections.push(`- ${item}`));
+    goalsContent.priorities.forEach((item: string) => sections.push(`- ${item}`));
     sections.push('');
   }
 
