@@ -12,6 +12,8 @@ export function getVersion(): string {
 // Commands
 export { initCommand } from './commands/init';
 export type { InitOptions } from './commands/init';
+export { migrateCommand } from './commands/migrate';
+export type { MigrateOptions, MigrationReport } from './commands/migrate';
 
 // Engine
 export * from './engine';
