@@ -1,0 +1,110 @@
+# MCP Server Configuration
+
+servers:
+  # File System Access
+  filesystem:
+    enabled: true
+    permissions:
+      - read
+      - write
+    paths:
+      - ./src
+      - ./tests
+      - ./docs
+    exclude:
+      - node_modules
+      - .git
+      - dist
+
+  # Version Control
+  git:
+    enabled: true
+    capabilities:
+      - status
+      - diff
+      - commit
+      - branch
+      - log
+    auto_commit: false
+
+  # Database Access
+  database:
+    enabled: true
+    provider: postgresql
+    connection:
+      host: localhost
+      port: 5432
+      database: app_dev
+      # Credentials from environment
+    migrations:
+      path: ./prisma/migrations
+      auto_run: false
+
+  # External APIs
+  github:
+    enabled: true
+    api_version: v3
+    capabilities:
+      - issues
+      - pull_requests
+      - releases
+    rate_limit: 5000/hour
+
+  slack:
+    enabled: true
+    webhook_url: ${SLACK_WEBHOOK_URL}
+    channels:
+      - engineering
+      - deployments
+      - incidents
+
+  # Testing & QA
+  test_runner:
+    enabled: true
+    framework: vitest
+    commands:
+      unit: npm run test:unit
+      integration: npm run test:integration
+      e2e: npm run test:e2e
+      coverage: npm run test:coverage
+    parallel: true
+    watch_mode: true
+
+  # Build & Deploy
+  build:
+    enabled: true
+    commands:
+      build: npm run build
+      lint: npm run lint
+      type_check: npm run type-check
+    output_dir: ./dist
+
+  deploy:
+    enabled: true
+    platforms:
+      - vercel
+      - railway
+    environments:
+      - development
+      - staging
+      - production
+    require_approval:
+      - production
+
+# Custom Tools
+custom_commands:
+  - name: analyze
+    description: Run static code analysis
+    command: npm run analyze
+    when: before_commit
+
+  - name: security_scan
+    description: Scan for vulnerabilities
+    command: npm audit --audit-level=moderate
+    when: daily
+
+  - name: update_deps
+    description: Update dependencies
+    command: npm run update-deps
+    when: weekly
+    auto_approve: false

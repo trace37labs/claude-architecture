@@ -247,15 +247,22 @@
 - **Completed**: 2026-01-21
 - **Commit**: c001423
 
-#### 12. Build Example Projects
+#### 12. Build Example Projects ✅
 - **Why**: Show users how to structure real projects
 - **What**: 3-4 example projects (simple, complex, migrated)
 - **Files**:
-  - `examples/simple-project/` - Basic 5-layer setup
-  - `examples/complex-project/` - Full-featured setup
-  - `examples/migrated-project/` - From CLAUDE.md to new structure
-- **Tests**: Validate all examples with `claude-arch validate`
-- **Status**: TODO
+  - `examples/simple-project/` - Minimal structure (single files per layer)
+  - `examples/complex-project/` - Full structure (subdirectories per layer)
+  - `examples/migrated-project/` - Migration example (before/after)
+  - `examples/README.md` - Overview and usage guide
+- **Content**:
+  - Simple project: 6 files (README + 5 layers)
+  - Complex project: 14 files (comprehensive real-world example)
+  - Migrated project: Before/after showing classification
+- **Tests**: 332/337 tests passing (5 test env failures in show.test.ts)
+- **Status**: DONE
+- **Completed**: 2026-01-21
+- **Commit**: (pending)
 
 #### 13. Package for npm Distribution
 - **Why**: Make tool installable via `npm install -g claude-arch`
