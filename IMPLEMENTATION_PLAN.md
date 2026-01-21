@@ -152,15 +152,23 @@
 - **Completed**: 2026-01-21
 - **Commit**: abe1ae6
 
-#### 7. Build `claude-arch migrate` Command
+#### 7. Build `claude-arch migrate` Command ✅
 - **Why**: Convert existing CLAUDE.md/AGENTS.md to new structure
 - **What**: Read old files, classify content, write to layer-specific files
 - **Files**:
-  - `src/commands/migrate.ts` - Migration command
-  - `src/migrators/rules-extractor.ts` - Extract rules from CLAUDE.md
-  - `src/migrators/methods-extractor.ts` - Extract methods from AGENTS.md
-- **Tests**: Migrate real CLAUDE.md files, verify output correctness
-- **Status**: TODO
+  - `src/commands/migrate.ts` - Migration command (973 lines)
+  - Integrated with existing parsers (legacy-parser, layer-classifier)
+  - CLI integration in `src/cli.ts`
+  - Exports in `src/index.ts`
+- **Tests**: 22 comprehensive tests covering all functionality (all passing)
+  - `tests/unit/commands/migrate.test.ts` - Full test coverage
+  - File discovery, minimal/full structure migration
+  - Backup, dry-run, force overwrite
+  - Content preservation, unclassified content handling
+  - MCP server extraction, separate directories
+- **Status**: DONE
+- **Completed**: 2026-01-21
+- **Commit**: 73ab0c0
 
 #### 8. Build `claude-arch validate` Command
 - **Why**: Check that project structure follows spec correctly
