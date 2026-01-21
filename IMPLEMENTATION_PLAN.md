@@ -225,14 +225,27 @@
 
 ### Phase 3: Integration & Packaging
 
-#### 11. Create MCP Server Implementation
+#### 11. Create MCP Server Implementation ✅
 - **Why**: Allow Claude Code to consume this architecture natively
 - **What**: MCP server that exposes config resolution as tool calls
 - **Files**:
-  - `src/mcp/server.ts` - MCP server entry point
-  - `src/mcp/tools.ts` - MCP tool definitions
-- **Tests**: Test MCP protocol compliance
-- **Status**: TODO
+  - `src/mcp/server.ts` - MCP server entry point (199 lines)
+  - `src/mcp/tools.ts` - MCP tool definitions (314 lines)
+  - `tests/unit/mcp/server.test.ts` - Server tests (16 lines)
+  - `tests/unit/mcp/tools.test.ts` - Tool tests (233 lines)
+  - Updated `package.json` - Added claude-arch-mcp bin entry
+  - Updated `src/index.ts` - Exported MCP server and tools
+- **Features**:
+  - resolve-config tool (json/tree/precedence formats)
+  - validate-structure tool
+  - detect-conflicts tool
+  - get-recommendations tool (with quick wins filter)
+  - StdioServerTransport for Claude Code integration
+  - Comprehensive error handling
+- **Tests**: 16 unit tests (all passing)
+- **Status**: DONE
+- **Completed**: 2026-01-21
+- **Commit**: c001423
 
 #### 12. Build Example Projects
 - **Why**: Show users how to structure real projects
