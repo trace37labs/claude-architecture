@@ -82,15 +82,18 @@
 - **Completed**: 2026-01-21
 - **Commit**: 7329143
 
-#### 2. Define Core Data Model (Zod Schemas)
+#### 2. Define Core Data Model (Zod Schemas) ✅
 - **Why**: Type-safe representation of the 5-layer architecture
 - **What**: Zod schemas for each layer + scope + merged config
 - **Files**:
-  - `src/types/layers.ts` - Layer type definitions
-  - `src/types/config.ts` - Config structure types
-  - `src/types/scope.ts` - Scope hierarchy types
-- **Tests**: Schema validation tests
-- **Status**: TODO
+  - `src/types/layers.ts` - Layer type definitions (5 layers with merge strategies)
+  - `src/types/config.ts` - Config structure types (merged config, context)
+  - `src/types/scope.ts` - Scope hierarchy types (4 scope levels)
+  - `src/types/index.ts` - Barrel file for exports
+- **Tests**: 50 unit tests covering all schemas, all passing
+- **Status**: DONE
+- **Completed**: 2026-01-21
+- **Commit**: e300ac9
 
 #### 3. Implement File System Scanner
 - **Why**: Need to discover and read config files across scopes
