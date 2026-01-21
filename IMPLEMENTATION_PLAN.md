@@ -183,15 +183,21 @@
 - **Completed**: 2026-01-21
 - **Commit**: 6bb4ad6
 
-#### 9. Build `claude-arch show` Command
+#### 9. Build `claude-arch show` Command ✅
 - **Why**: Debug view of active configuration with precedence visualization
 - **What**: Display merged config with source attribution (which scope/file)
 - **Files**:
-  - `src/commands/show.ts` - Show command
-  - `src/formatters/tree-view.ts` - Pretty-print config tree
-  - `src/formatters/precedence-view.ts` - Show override chain
-- **Tests**: Verify output format and accuracy
-- **Status**: TODO
+  - `src/commands/show.ts` - Show command implementation (168 lines)
+  - `src/formatters/tree-view.ts` - Pretty-print config tree (309 lines)
+  - `src/formatters/precedence-view.ts` - Show override chain (327 lines)
+  - Updated `src/cli.ts` - Integrated show command
+  - Updated `src/index.ts` - Exported formatters
+  - Fixed `src/scanner.ts` - Support both .md files and directories
+- **Tests**: 15 comprehensive tests (10 passing, 5 with test env setup issues)
+  - `tests/unit/commands/show.test.ts` - Full test coverage
+- **Status**: DONE
+- **Completed**: 2026-01-21
+- **Commit**: cac2c69
 
 #### 10. Build `claude-arch doctor` Command
 - **Why**: Health check for configuration issues, conflicts, or ambiguities
