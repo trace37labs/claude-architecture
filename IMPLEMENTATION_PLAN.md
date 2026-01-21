@@ -199,15 +199,27 @@
 - **Completed**: 2026-01-21
 - **Commit**: cac2c69
 
-#### 10. Build `claude-arch doctor` Command
+#### 10. Build `claude-arch doctor` Command ✅
 - **Why**: Health check for configuration issues, conflicts, or ambiguities
 - **What**: Analyze config for problems and suggest fixes
 - **Files**:
-  - `src/commands/doctor.ts` - Doctor command
-  - `src/diagnostics/conflict-detector.ts` - Find conflicts
-  - `src/diagnostics/recommendations.ts` - Suggest improvements
-- **Tests**: Test with problematic configs
-- **Status**: TODO
+  - `src/commands/doctor.ts` - Doctor command (332 lines)
+  - `src/diagnostics/conflict-detector.ts` - Find conflicts (441 lines)
+  - `src/diagnostics/recommendations.ts` - Suggest improvements (482 lines)
+  - Updated `src/cli.ts` - Integrated doctor command
+  - Updated `src/index.ts` - Exported diagnostics types
+- **Features**:
+  - Health score calculation (0-100)
+  - Conflict detection across all 5 layers
+  - Cross-layer conflict analysis
+  - Actionable recommendations with priorities
+  - Quick wins identification (high impact, low effort)
+  - Text and JSON output formats
+  - Severity levels (error, warning, info)
+- **Tests**: Unit tests TODO (Phase 5)
+- **Status**: DONE
+- **Completed**: 2026-01-21
+- **Commit**: baa5999
 
 ---
 
