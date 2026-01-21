@@ -138,14 +138,19 @@
 
 ### Phase 2: CLI Commands (User Interface)
 
-#### 6. Build `claude-arch init` Command
+#### 6. Build `claude-arch init` Command ✅
 - **Why**: Bootstrap new projects with proper structure
 - **What**: Create `.claude/` directory with 5-layer folders + templates
 - **Files**:
-  - `src/commands/init.ts` - Init command implementation
-  - `templates/` - Template files for each layer
-- **Tests**: Run init, verify directory structure created
-- **Status**: TODO
+  - `src/commands/init.ts` - Init command implementation (613 lines)
+  - `src/utils/logger.ts` - Logger utility (28 lines)
+  - Updated `src/cli.ts` - Integrated init command
+  - Updated `src/index.ts` - Exported init functionality
+- **Tests**: 16 comprehensive unit tests covering all functionality (all passing)
+  - `tests/unit/commands/init.test.ts` - Full test coverage for minimal/full structures
+- **Status**: DONE
+- **Completed**: 2026-01-21
+- **Commit**: abe1ae6
 
 #### 7. Build `claude-arch migrate` Command
 - **Why**: Convert existing CLAUDE.md/AGENTS.md to new structure
