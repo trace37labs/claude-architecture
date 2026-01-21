@@ -18,12 +18,30 @@ export { validateCommand } from './commands/validate';
 export type { ValidateOptions, ValidationReport } from './commands/validate';
 export { showCommand } from './commands/show';
 export type { ShowOptions } from './commands/show';
+export { doctorCommand } from './commands/doctor';
+export type { DoctorOptions, DoctorReport } from './commands/doctor';
 
 // Validators
 export { validateStructure } from './validators/structure';
 export type { StructureValidationResult, StructureError } from './validators/structure';
 export { validateSchemas } from './validators/schema';
 export type { SchemaValidationResult, SchemaError } from './validators/schema';
+
+// Diagnostics
+export { detectConflicts } from './diagnostics/conflict-detector';
+export type {
+  Conflict,
+  ConflictSeverity,
+  ConflictDetectionResult,
+} from './diagnostics/conflict-detector';
+export { generateRecommendations } from './diagnostics/recommendations';
+export type {
+  Recommendation,
+  RecommendationPriority,
+  RecommendationImpact,
+  RecommendationEffort,
+  RecommendationResult,
+} from './diagnostics/recommendations';
 
 // Formatters
 export { formatTreeView } from './formatters/tree-view';

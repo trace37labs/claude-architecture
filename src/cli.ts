@@ -10,6 +10,7 @@ import { initCommand } from './commands/init';
 import { migrateCommand } from './commands/migrate';
 import { validateCommand } from './commands/validate';
 import { showCommand } from './commands/show';
+import { doctorCommand } from './commands/doctor';
 import { logger } from './utils/logger';
 
 const program = new Command();
@@ -100,6 +101,33 @@ program
   .action(async (options) => {
     try {
       await showCommand(options);
+    } catch (error) {
+      if (error instanceof Error) {
+        logger.error(error.message);
+      } else {
+        logger.error('An unknown error occurred');
+      }
+      process.exit(1);
+    }
+  });
+
+// Doctor command
+program
+  .command('doctor')
+  .description('Health check for configuration - detects conflicts and suggests improvements')
+  .option('-t, --target-dir <path>', 'Directory to analyze (default: current)')
+  .option('-v, --verbose', 'Show detailed conflict information')
+  .option('--errors-only', 'Only show errors (no warnings or info)')
+  .option('-r, --recommendations', 'Show recommendations for improvement')
+  .option('-f, --format <type>', 'Output format: text or json (default: text)')
+  .option('--no-color', 'Disable color output')
+  .action(async (options) => {
+    try {
+      const report = await doctorCommand(options);
+      // Exit with error code if health is critical or has errors
+      if (report.assessment === 'critical' || report.conflicts.bySeverity.errors.length > 0) {
+        process.exit(1);
+      }
     } catch (error) {
       if (error instanceof Error) {
         logger.error(error.message);
