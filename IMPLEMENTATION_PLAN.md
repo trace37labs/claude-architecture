@@ -170,15 +170,18 @@
 - **Completed**: 2026-01-21
 - **Commit**: 73ab0c0
 
-#### 8. Build `claude-arch validate` Command
+#### 8. Build `claude-arch validate` Command ✅
 - **Why**: Check that project structure follows spec correctly
 - **What**: Validate file structure, schema compliance, no conflicts
 - **Files**:
-  - `src/commands/validate.ts` - Validation command
-  - `src/validators/structure.ts` - Check directory structure
-  - `src/validators/schema.ts` - Validate file schemas
-- **Tests**: Test with valid/invalid structures
-- **Status**: TODO
+  - `src/commands/validate.ts` - Validation command (243 lines)
+  - `src/validators/structure.ts` - Check directory structure (280 lines)
+  - `src/validators/schema.ts` - Validate file schemas (295 lines)
+  - `tests/unit/commands/validate.test.ts` - 22 comprehensive tests (all passing)
+- **Tests**: Test with valid/invalid structures (22 tests covering all functionality)
+- **Status**: DONE
+- **Completed**: 2026-01-21
+- **Commit**: 6bb4ad6
 
 #### 9. Build `claude-arch show` Command
 - **Why**: Debug view of active configuration with precedence visualization
