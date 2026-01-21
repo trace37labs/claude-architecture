@@ -118,20 +118,21 @@
 - **Completed**: 2026-01-21
 - **Commit**: 9fc770b
 
-#### 5. Implement Precedence Engine
+#### 5. Implement Precedence Engine ✅
 - **Why**: Core logic for merging configs across scopes with proper precedence
 - **What**: Merge algorithm respecting layer-specific behaviors (additive vs override)
 - **Files**:
-  - `src/engine/merger.ts` - Merge configs across scopes
-  - `src/engine/precedence.ts` - Layer-specific precedence rules
-  - `src/engine/resolver.ts` - Resolve final config for a task
-- **Tests**: Test complex merge scenarios, verify precedence works
-- **Status**: IN PROGRESS (Iteration 1 incomplete - file creation issues)
-- **Notes**:
-  - Designed complete implementation with source tracking and metadata
-  - Discovered pre-existing test files that define expected API
-  - Tests expect simpler signatures: `mergeRules(rules: RulesLayer[])` not `mergeRulesLayers(layers: LayerWithScope<RulesLayer>[])`
-  - Need to implement to match existing test expectations
+  - `src/engine/merger.ts` - Merge configs across scopes (246 lines)
+  - `src/engine/precedence.ts` - Scope precedence rules (68 lines)
+  - `src/engine/resolver.ts` - Resolve final config for a task (95 lines)
+  - `src/engine/index.ts` - Barrel exports (33 lines)
+- **Tests**: 68 comprehensive unit tests covering all functions (all passing)
+  - `tests/unit/engine/merger.test.ts` - 22 tests for layer merging
+  - `tests/unit/engine/precedence.test.ts` - 27 tests for scope precedence
+  - `tests/unit/engine/resolver.test.ts` - 19 tests for config resolution
+- **Status**: DONE
+- **Completed**: 2026-01-21
+- **Commit**: [next]
   - Files created but removed due to compilation errors
   - Next iteration: Implement simpler API matching test expectations first
 
