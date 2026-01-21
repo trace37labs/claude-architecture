@@ -9,6 +9,7 @@ import { Command } from 'commander';
 import { initCommand } from './commands/init';
 import { migrateCommand } from './commands/migrate';
 import { validateCommand } from './commands/validate';
+import { showCommand } from './commands/show';
 import { logger } from './utils/logger';
 
 const program = new Command();
@@ -75,6 +76,30 @@ program
       if (!report.valid) {
         process.exit(1);
       }
+    } catch (error) {
+      if (error instanceof Error) {
+        logger.error(error.message);
+      } else {
+        logger.error('An unknown error occurred');
+      }
+      process.exit(1);
+    }
+  });
+
+// Show command
+program
+  .command('show')
+  .description('Display active configuration with source attribution')
+  .option('-t, --target-dir <path>', 'Directory to show config for (default: current)')
+  .option('-f, --format <type>', 'Display format: tree, precedence, or json (default: tree)')
+  .option('-l, --layer <layer>', 'Show specific layer only')
+  .option('-v, --verbose', 'Verbose output with full details')
+  .option('-c, --compact', 'Compact output (minimal)')
+  .option('--no-color', 'Disable color output')
+  .option('--show-empty', 'Show empty layers/scopes')
+  .action(async (options) => {
+    try {
+      await showCommand(options);
     } catch (error) {
       if (error instanceof Error) {
         logger.error(error.message);

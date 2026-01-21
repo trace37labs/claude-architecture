@@ -216,9 +216,17 @@ export function discoverLayers(claudeDir: string): LayerDirectories {
   const layerNames = ['rules', 'tools', 'methods', 'knowledge', 'goals'] as const;
 
   for (const layerName of layerNames) {
-    const layerPath = join(claudeDir, layerName);
-    if (existsSync(layerPath) && isDirectory(layerPath)) {
-      layers[layerName] = layerPath;
+    // Check for directory first (full structure)
+    const layerDirPath = join(claudeDir, layerName);
+    if (existsSync(layerDirPath) && isDirectory(layerDirPath)) {
+      layers[layerName] = layerDirPath;
+      continue;
+    }
+
+    // Check for .md file (minimal structure)
+    const layerFilePath = join(claudeDir, `${layerName}.md`);
+    if (existsSync(layerFilePath) && !isDirectory(layerFilePath)) {
+      layers[layerName] = layerFilePath;
     }
   }
 
