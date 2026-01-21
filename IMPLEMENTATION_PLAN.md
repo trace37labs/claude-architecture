@@ -262,7 +262,7 @@
 - **Tests**: 332/337 tests passing (5 test env failures in show.test.ts)
 - **Status**: DONE
 - **Completed**: 2026-01-21
-- **Commit**: (pending)
+- **Commit**: 33ca0ca
 
 #### 13. Package for npm Distribution
 - **Why**: Make tool installable via `npm install -g claude-arch`
