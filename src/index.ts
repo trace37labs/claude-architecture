@@ -57,3 +57,7 @@ export * from './types';
 
 // Utilities
 export { logger } from './utils/logger';
+
+// MCP Server
+export { createMcpServer } from './mcp/server';
+export * from './mcp/tools';
