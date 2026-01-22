@@ -18,6 +18,8 @@ export interface TreeViewOptions {
   showEmpty?: boolean;
   /** Use color output */
   color?: boolean;
+  /** Show specific layer only */
+  layer?: LayerType;
 }
 
 interface TreeNode {
@@ -52,14 +54,18 @@ export function formatTreeView(
   lines.push(indent(`Scopes: ${config.metadata.scopesIncluded.join(' → ')}`));
   lines.push('');
 
-  // Each layer
-  const layers = [
+  // Each layer - filter to specific layer if requested
+  const allLayers = [
     { type: LayerType.Rules, name: 'RULES', icon: '🔒' },
     { type: LayerType.Tools, name: 'TOOLS', icon: '🔧' },
     { type: LayerType.Methods, name: 'METHODS', icon: '📋' },
     { type: LayerType.Knowledge, name: 'KNOWLEDGE', icon: '📚' },
     { type: LayerType.Goals, name: 'GOALS', icon: '🎯' },
   ];
+
+  const layers = options.layer
+    ? allLayers.filter(l => l.type === options.layer)
+    : allLayers;
 
   for (const layer of layers) {
     const content = config[layer.type];

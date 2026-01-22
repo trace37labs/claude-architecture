@@ -62,7 +62,23 @@ There's no unified view. Things overlap. Configuration is scattered everywhere.
 
 Run `claude-arch show --format unified` to see the **complete picture**.
 
-### 3. Smart Precedence
+### 3. Portable Environments (Shift & Lift)
+
+**Export and deploy configurations across different environments:**
+
+- 📦 **Export manifests** with `export` command
+- 🔍 **Gap analysis** with `gaps` command
+- 🖥️ **Platform-aware** (Mac → Linux → Windows)
+- 🔧 **Auto-generate setup scripts** for new environments
+- ✅ **Validate environments** before deployment
+
+**Perfect for:**
+- Mac → VPS migration
+- Team onboarding
+- CI/CD validation
+- Multi-environment projects
+
+### 4. Smart Precedence
 
 **User vs Project is read-only context, not fragmentation:**
 
@@ -200,6 +216,12 @@ claude-arch show --format json
 
 # Show verbose details (skill names, workflows, memory categories)
 claude-arch show --format unified --verbose
+
+# Filter by scope (user, project, task, system)
+claude-arch show --show-sources --scope project
+
+# Filter by layer (rules, tools, methods, knowledge, goals)
+claude-arch show --show-sources --layer rules
 ```
 
 **Example output:**
@@ -291,76 +313,112 @@ claude-arch doctor --format json
   📌 Add security rules
      ✅ Action: Add security constraints to rules layer
      💎 Benefit: Establish clear security boundaries
-
-  📌 Define current goals
-     ✅ Action: Add goals to guide Claude's work
-     💎 Benefit: Focus efforts on what matters most
 ```
 
-**Note:** User-level config is NOT flagged as fragmentation - it's normal context.
+### `export` — Portable Environment Manifest
 
-### `export` — Generate portable manifest
-
-Create a manifest of all requirements for deployment to another environment:
+**Generate a portable manifest for cross-environment deployment** (Mac → VPS, local → CI/CD):
 
 ```bash
-# Export manifest (auto-detect current platform)
+# Export manifest for current platform
 claude-arch export --output manifest.yaml
 
-# Export for specific target platform
+# Export targeting specific platform (smart filtering)
 claude-arch export --output manifest.yaml --platform linux
+claude-arch export --output manifest.yaml --platform darwin
+claude-arch export --output manifest.yaml --platform windows
 
-# Generate setup script alongside manifest
+# Generate executable setup script alongside manifest
 claude-arch export --output manifest.yaml --generate-setup
 
-# JSON output
+# JSON format
 claude-arch export --output manifest.json --json
 ```
 
-**What it exports:**
-- MCP servers and their packages
-- CLI tools (with platform-specific filtering)
-- Environment variables
-- Path requirements
-- Skills with dependencies
-- Hooks and scripts
-- Cross-platform path mappings
+**Platform-aware export:**
 
-**Platform-aware export:** When exporting with `--platform`, the tool:
-- Filters out incompatible tools (e.g., excludes xcodebuild when targeting linux)
-- Adjusts install commands for target platform
-- Maps paths appropriately (e.g., `~/Desktop` → `/home/user/Desktop`)
+When you specify `--platform <target>`, the tool intelligently:
+- Excludes platform-specific tools (e.g., xcodebuild excluded on linux)
+- Maps install commands (apt-get vs brew vs winget)
+- Pre-maps paths (~/Desktop → /home/user)
 
-### `gaps` — Analyze environment gaps
+**What gets exported:**
 
-Compare current environment against a manifest to find missing dependencies:
+- ✅ MCP servers (required & optional)
+- ✅ CLI tools with install commands
+- ✅ Environment variables
+- ✅ Required paths/directories
+- ✅ Skills and dependencies
+- ✅ Hooks and scripts
+- ✅ Platform mappings (darwin ↔ linux ↔ windows)
+
+**Example manifest:**
+
+```yaml
+metadata:
+  generated_from: /Users/paul/project
+  date: 2026-01-22
+  platform: darwin
+  target_platform: linux
+
+required:
+  mcp_servers:
+    - name: github
+      package: "@anthropic/mcp-github"
+      required: true
+
+  cli_tools:
+    - name: ffuf
+      required: true
+      install_cmd: "apt-get install -y ffuf || go install github.com/ffuf/ffuf/v2@latest"
+    # xcodebuild excluded - darwin-only
+
+  environment_variables:
+    - name: ANTHROPIC_API_KEY
+      required: true
+
+path_mappings:
+  darwin_to_linux:
+    "~/Desktop/projects": "/home/user/projects"
+    "~/Library/Application Support": "~/.config"
+```
+
+**Generated setup script** (with `--generate-setup`):
 
 ```bash
-# Check what's missing
+#!/bin/bash
+# Usage: ./setup.sh [--check-only] [--skip-optional]
+
+# Checks environment and installs missing dependencies
+./setup.sh                # Install everything
+./setup.sh --check-only   # Just show what's missing
+./setup.sh --skip-optional # Skip optional dependencies
+```
+
+### `gaps` — Environment Gap Analysis
+
+**Compare current environment against a manifest to see what's missing:**
+
+```bash
+# Analyze gaps against manifest
 claude-arch gaps --manifest manifest.yaml
 
-# Show install commands
+# Show install commands for missing items
 claude-arch gaps --manifest manifest.yaml --fix
 
 # JSON output for automation
 claude-arch gaps --manifest manifest.yaml --json
 ```
 
-**What it checks:**
-- MCP server installation (~/.claude.json)
-- CLI tool availability (with version detection)
-- Environment variables (set vs not set)
-- Path existence
-- Hook script availability
-
 **Example output:**
+
 ```
 Environment Gap Analysis
 ========================
 
 MCP Servers
 ✗ github - NOT INSTALLED
-  Install: claude mcp add github -- npx @anthropic/mcp-github
+  Install: npx @anthropic/mcp-github
 ✓ postgres - installed
 
 CLI Tools
@@ -371,18 +429,47 @@ CLI Tools
 
 Environment Variables
 ✗ ANTHROPIC_API_KEY - NOT SET
-✓ GITHUB_TOKEN - set
+✓ DATABASE_URL - set
 
 Summary
 =======
-Required: 2 missing, 5 available
-Optional: 0 missing, 1 available
+Required: 2 missing, 3 available
+Optional: 1 missing, 0 available
+
+Run 'claude-arch gaps --manifest manifest.yaml --fix' for install commands
 ```
 
 **Use cases:**
-- **Mac → VPS migration:** Export on Mac, check gaps on VPS, install missing tools
-- **Team onboarding:** New members run `gaps` to see exactly what they need
-- **CI/CD validation:** Automated checks that environment has all required dependencies
+
+1. **Mac → VPS Migration**
+   ```bash
+   # On Mac - export for Linux
+   claude-arch export -o manifest.yaml --platform linux --generate-setup
+   scp manifest.yaml setup.sh vps:/projects/
+
+   # On VPS - check and install
+   ./setup.sh
+   ```
+
+2. **Team Onboarding**
+   ```bash
+   # New team member clones repo
+   git clone project && cd project
+   claude-arch gaps -m manifest.yaml
+   # Shows exactly what they need to install
+   ```
+
+3. **CI/CD Validation**
+   ```bash
+   # In CI pipeline
+   claude-arch gaps -m manifest.yaml --json | jq '.summary.required_missing'
+   # Fail build if required items missing
+  📌 Define current goals
+     ✅ Action: Add goals to guide Claude's work
+     💎 Benefit: Focus efforts on what matters most
+```
+
+**Note:** User-level config is NOT flagged as fragmentation - it's normal context.
 
 ## MCP Server
 
@@ -425,13 +512,15 @@ npm run dev      # Watch mode
 
 ## Status
 
-v0.1.3 — Full feature set complete:
-- 5-layer parser with precedence engine
-- Portable architecture (export/gaps commands)
-- Cross-platform support (darwin, linux, windows)
-- All CLI commands working
-- MCP server integration
-- 332+ tests passing
+v0.1.4 — Production-Ready:
+- ✅ 5-layer parser with precedence engine
+- ✅ Universal configuration scanner (10+ sources)
+- ✅ Portable architecture (export/gaps commands)
+- ✅ Platform-aware deployment (darwin, linux, windows)
+- ✅ Automated setup script generation
+- ✅ All CLI commands working and tested
+- ✅ MCP server integration
+- ✅ 332+ tests passing
 
 ## License
 

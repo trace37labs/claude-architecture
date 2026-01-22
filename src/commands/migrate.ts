@@ -930,8 +930,17 @@ async function migrateAllSources(
     logger.info('Dry run - would migrate:');
   }
 
-  // Migrate based on --source flag or all sources
-  const sourcesToMigrate = options.source ? [options.source] : ['mcp', 'hooks', 'skills', 'memory'];
+  // Migrate based on --source flag or all PROJECT-level sources
+  // CRITICAL: 'memory' is excluded from --all because user config is read-only context
+  const sourcesToMigrate = options.source
+    ? [options.source]
+    : ['mcp', 'hooks', 'skills']; // 'memory' intentionally excluded
+
+  // Warn if user explicitly requested memory migration
+  if (options.source === 'memory') {
+    logger.warn('Note: User memory (~/.claude/memory/) is read-only context');
+    logger.warn('Migration will be skipped to preserve user-level configuration');
+  }
 
   for (const sourceType of sourcesToMigrate) {
     switch (sourceType) {
@@ -1151,36 +1160,21 @@ async function migrateSkills(
 
 /**
  * Migrate user memory to knowledge/
+ *
+ * CRITICAL: User-level config (~/.claude/memory/) is READ-ONLY context.
+ * This migration is intentionally DISABLED to prevent modifying user-level files.
+ * User memory provides global context and should never be migrated into project scope.
  */
 async function migrateMemory(
-  sources: any,
-  claudeDir: string,
+  _sources: any,
+  _claudeDir: string,
   report: MigrationReport,
-  options: MigrateOptions
+  _options: MigrateOptions
 ): Promise<void> {
-  const memoryFiles = sources.userMemory || [];
-  if (memoryFiles.length === 0) {
-    logger.info('No user memory to migrate');
-    return;
-  }
-
-  logger.info(`Migrating ${memoryFiles.length} memory file(s)...`);
-
-  for (const mem of memoryFiles) {
-    const outputPath = path.join(claudeDir, 'knowledge', 'memory', mem.name);
-
-    if (options.dryRun) {
-      logger.info(`Would migrate ${mem.name} → knowledge/memory/`);
-      report.created.push(`knowledge/memory/${mem.name}`);
-    } else {
-      await fs.mkdir(path.dirname(outputPath), { recursive: true });
-      await fs.writeFile(outputPath, mem.content, 'utf-8');
-      report.created.push(`knowledge/memory/${mem.name}`);
-    }
-  }
-
-  report.migrated.push(`${memoryFiles.length} memory file(s)`);
-  logger.info(`Migrated ${memoryFiles.length} memory file(s) → knowledge/memory/`);
+  // User memory is read-only context - DO NOT MIGRATE
+  logger.info('User memory migration is disabled (user config is read-only context)');
+  logger.info('User-level config (~/.claude/memory/) provides global context and should not be migrated');
+  report.warnings.push('User memory migration skipped - user config is read-only context');
 }
 
 /**

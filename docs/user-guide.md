@@ -11,6 +11,7 @@
 - [File Structure](#file-structure)
 - [Scope Hierarchy](#scope-hierarchy)
 - [MCP Integration](#mcp-integration)
+- [Portable Environments (Export & Gaps)](#portable-environments-export--gaps)
 - [Advanced Usage](#advanced-usage)
 
 ---
@@ -787,6 +788,237 @@ Shared user config applies to both projects, but each has unique knowledge/goals
    git add .claude/
    git commit -m "Migrate to 5-layer architecture"
    ```
+
+---
+
+## Portable Environments (Export & Gaps)
+
+### Overview
+
+The **export** and **gaps** commands enable seamless configuration portability across different environments.
+
+**Use cases:**
+- Mac → VPS (Linux) migration
+- Team onboarding (new developer setup)
+- CI/CD environment validation
+- Multi-environment projects (dev/staging/prod)
+
+### Export Command
+
+Generate a portable configuration manifest that can be used to replicate your environment elsewhere.
+
+#### Basic Usage
+
+```bash
+# Export current configuration
+claude-arch export --output manifest.yaml
+
+# Export with platform targeting (smart filtering)
+claude-arch export --output manifest.yaml --platform linux
+
+# Generate setup script alongside manifest
+claude-arch export --output manifest.yaml --generate-setup
+
+# Export as JSON
+claude-arch export --output manifest.json --json
+```
+
+#### Platform-Aware Export
+
+When exporting with `--platform`, the tool intelligently filters platform-specific tools:
+
+```bash
+# Export from Mac for Linux deployment
+claude-arch export -o manifest.yaml --platform linux --generate-setup
+```
+
+**What happens:**
+- Platform-specific tools excluded (e.g., xcodebuild only on darwin)
+- Install commands adapted for target platform (apt-get vs brew vs winget)
+- Paths automatically mapped (~/Library → ~/.config)
+- Setup script uses target platform's package manager
+
+**Example manifest.yaml:**
+```yaml
+metadata:
+  generated_from: /Users/you/project
+  date: 2026-01-22
+  platform: darwin
+  target_platform: linux
+
+required:
+  mcp_servers:
+    - name: github
+      package: "@anthropic/mcp-github"
+      required: true
+
+  cli_tools:
+    - name: git
+      required: true
+      install_cmd: apt-get install -y git  # Platform-specific
+    - name: ffuf
+      required: true
+      install_cmd: go install github.com/ffuf/ffuf/v2@latest
+    # xcodebuild NOT included (darwin-only)
+
+  environment_variables:
+    - name: ANTHROPIC_API_KEY
+      required: true
+    - name: GITHUB_TOKEN
+      required: true
+
+  paths:
+    - source: ./scripts
+      description: Project scripts
+      required: true
+
+path_mappings:
+  darwin_to_linux:
+    "~": /home/$USER
+    ~/Library/Application Support: ~/.config
+```
+
+#### Setup Script Generation
+
+With `--generate-setup`, an executable bash script is created:
+
+```bash
+# Generate manifest + setup.sh
+claude-arch export -o manifest.yaml --generate-setup
+
+# Result: manifest.yaml + manifest.sh
+```
+
+**Setup script features:**
+- Color-coded output (✓ available, ✗ missing, ⊘ skipped)
+- `--check-only` flag for dry-run validation
+- `--skip-optional` flag to skip non-required items
+- Automatic MCP server installation
+- CLI tool installation with platform commands
+- Environment variable setup guidance
+- Summary report
+
+**Usage on target environment:**
+```bash
+# Copy to VPS
+scp manifest.yaml manifest.sh vps:/projects/
+
+# On VPS - check what's missing
+./manifest.sh --check-only
+
+# On VPS - install everything
+./manifest.sh
+
+# Skip optional dependencies
+./manifest.sh --skip-optional
+```
+
+### Gaps Command
+
+Analyze the current environment against a manifest to identify missing dependencies.
+
+#### Basic Usage
+
+```bash
+# Analyze gaps against manifest
+claude-arch gaps --manifest manifest.yaml
+
+# Show install commands for missing items
+claude-arch gaps --manifest manifest.yaml --fix
+
+# Compare against another project
+claude-arch gaps --from /path/to/source/project
+
+# JSON output for automation
+claude-arch gaps --manifest manifest.yaml --json
+```
+
+#### Example Output
+
+```
+Environment Gap Analysis
+========================
+
+MCP Servers
+✗ github - NOT INSTALLED
+  Install: npx @anthropic/mcp-github
+✗ postgres - NOT INSTALLED
+  Install: npx @anthropic/mcp-postgres
+✓ slack - installed
+
+CLI Tools
+✗ ffuf - NOT FOUND
+  Install: go install github.com/ffuf/ffuf/v2@latest
+✗ nuclei - NOT FOUND
+  Install: go install github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest
+✓ git - available (2.39.0)
+✓ npm - available (10.2.0)
+⊘ xcodebuild - SKIPPED (darwin only, current: linux)
+
+Environment Variables
+✗ ANTHROPIC_API_KEY - NOT SET
+✗ GITHUB_TOKEN - NOT SET
+✓ DATABASE_URL - set
+
+Paths
+✗ ~/Desktop/projects - NOT FOUND
+✓ ./scripts - exists
+
+Summary
+=======
+Required: 8 missing, 4 available
+Optional: 2 missing, 1 available
+
+Run 'claude-arch gaps --manifest manifest.yaml --fix' for install commands
+```
+
+#### With --fix Flag
+
+Shows copy-pasteable install commands:
+
+```bash
+$ claude-arch gaps --manifest manifest.yaml --fix
+
+To fix missing dependencies, run:
+
+# MCP Servers
+claude mcp add github -- npx @anthropic/mcp-github
+claude mcp add postgres -- npx @anthropic/mcp-postgres
+
+# CLI Tools
+go install github.com/ffuf/ffuf/v2@latest
+go install github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest
+
+# Environment Variables (add to ~/.bashrc or ~/.zshrc)
+export ANTHROPIC_API_KEY="your-key-here"
+export GITHUB_TOKEN="your-token-here"
+```
+
+### Portable Workflow Example
+
+**Scenario:** Moving iOS project from Mac to Linux VPS for CI/CD
+
+```bash
+# 1. On Mac - Export configuration for Linux
+claude-arch export -o manifest.yaml --platform linux --generate-setup
+
+# 2. Copy to VPS
+scp manifest.yaml manifest.sh user@vps:/projects/myapp/
+
+# 3. On VPS - Check requirements
+./manifest.sh --check-only
+
+# 4. On VPS - Install dependencies
+./manifest.sh
+
+# 5. Verify everything is ready
+claude-arch gaps -m manifest.yaml
+
+# 6. Deploy application
+# (your deployment commands here)
+```
+
+**Result:** Platform-specific tools (xcodebuild) are excluded, Linux equivalents are used, and the setup script handles all the installation automatically.
 
 ---
 

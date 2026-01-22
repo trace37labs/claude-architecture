@@ -141,6 +141,7 @@ function displayTree(
     verbose: options.verbose,
     showEmpty: options.showEmpty,
     color: useColor,
+    layer: options.layer,
   });
 
   console.log(output);

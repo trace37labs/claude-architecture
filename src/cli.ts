@@ -20,7 +20,7 @@ const program = new Command();
 program
   .name('claude-arch')
   .description('5-layer configuration system for Claude Code')
-  .version('0.1.3');
+  .version('0.1.8');
 
 // Init command
 program
@@ -196,7 +196,7 @@ program
   .command('version')
   .description('Show version information')
   .action(() => {
-    console.log('claude-arch v0.1.3');
+  console.log('claude-arch v0.1.8');
   });
 
 program.parse(process.argv);
