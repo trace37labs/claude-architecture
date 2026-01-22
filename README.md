@@ -1,208 +1,168 @@
 # Claude Unified Architecture
 
-> Bringing order to the chaos of Claude Code configuration.
+A CLI tool that organises Claude Code configuration into a clear, layered structure.
 
-## The Problem
+## Why This Exists
 
-Claude Code has evolved organically, resulting in **10+ overlapping systems** for configuration:
+When you start using Claude Code, configuration is simple - maybe a `CLAUDE.md` file with some project notes.
 
-- `CLAUDE.md` — project instructions
-- `AGENTS.md` — agent definitions
-- Skills — capability packages
-- Hooks — lifecycle events
-- Plugins — extended functionality
-- MCP Servers — external tools
-- Slash Commands — custom commands
-- System Prompts — base behavior
-- User Memory — persistent context
-- User Preferences — settings
-
-**No clear hierarchy. No composition model. No mental model.**
-
-## The Solution
-
-A 5-layer architecture with clear separation of concerns:
+Then it grows:
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│  LAYER 5: GOALS                                         │
-│  What to achieve. Tasks, objectives, success criteria.  │
-├─────────────────────────────────────────────────────────┤
-│  LAYER 4: KNOWLEDGE                                     │
-│  What I know. Context, specs, domain information.       │
-├─────────────────────────────────────────────────────────┤
-│  LAYER 3: METHODS                                       │
-│  How to do it. Patterns, approaches, workflows.         │
-├─────────────────────────────────────────────────────────┤
-│  LAYER 2: TOOLS                                         │
-│  What I use. MCP servers, commands, capabilities.       │
-├─────────────────────────────────────────────────────────┤
-│  LAYER 1: RULES                                         │
-│  Constraints. Limits, guardrails, non-negotiables.      │
-└─────────────────────────────────────────────────────────┘
+CLAUDE.md          ← project instructions
+AGENTS.md          ← agent definitions
+~/.claude/         ← user preferences
+skills/            ← capability packages
+hooks              ← lifecycle events
+MCP servers        ← external tools
+slash commands     ← custom commands
+plugins            ← extended functionality
 ```
 
-## File Structure
+Soon you're asking:
+- "Should this go in CLAUDE.md or a skill?"
+- "Do my user settings override project settings, or the other way around?"
+- "How do I share project config without sharing my personal preferences?"
+- "Where did I put that instruction?"
+
+There's no clear system. Things overlap. It's hard to know what's active.
+
+## What This Tool Does
+
+It reorganises everything into **5 layers**, each with a clear purpose:
+
+| Layer | Purpose | Example |
+|-------|---------|---------|
+| **RULES** | Constraints that must be followed | "Never commit secrets", "Always use TypeScript strict mode" |
+| **TOOLS** | Capabilities available to use | MCP servers, slash commands, scripts |
+| **METHODS** | How to do things | Workflows, patterns, checklists |
+| **KNOWLEDGE** | Context and information | Architecture docs, glossary, specs |
+| **GOALS** | Current objectives | Sprint goals, success criteria, priorities |
+
+Everything lives in a `.claude/` directory:
 
 ```
 project/
-├── .claude/
-│   ├── rules/        # Layer 1: Constraints
-│   ├── tools/        # Layer 2: Capabilities
-│   ├── methods/      # Layer 3: How-to
-│   ├── knowledge/    # Layer 4: Context
-│   └── goals/        # Layer 5: Objectives
-└── ...
+└── .claude/
+    ├── rules/        # What must be followed
+    ├── tools/        # What can be used
+    ├── methods/      # How to do things
+    ├── knowledge/    # What to know
+    └── goals/        # What to achieve
 ```
 
-## Precedence
+## How Precedence Works
+
+When the same thing is defined in multiple places, the most specific wins:
 
 ```
-Task Context    →  Most specific (wins)
-Project         →  .claude/ in project
-User            →  ~/.claude/
-System          →  Anthropic defaults (lowest)
+Task Context    →  Highest priority (most specific)
+Project         →  .claude/ in your project
+User            →  ~/.claude/ (your personal config)
+System          →  Anthropic defaults (lowest priority)
 ```
+
+Different layers merge differently:
+- **RULES, TOOLS, KNOWLEDGE** — additive (everything applies)
+- **METHODS, GOALS** — override (specific replaces general)
 
 ## Installation
-
-Install globally via npm:
 
 ```bash
 npm install -g claude-arch
 ```
 
-Or use directly with npx:
+Or use directly:
 
 ```bash
 npx claude-arch init
 ```
 
-## Quick Start
+## Commands
 
-### 1. Initialize a New Project
-
-```bash
-# Create minimal structure (single files per layer)
-claude-arch init
-
-# Create full structure (subdirectories per layer)
-claude-arch init --full
-```
-
-### 2. Migrate Existing Configuration
+### `init` — Start a new project
 
 ```bash
-# Migrate CLAUDE.md and AGENTS.md to new structure
-claude-arch migrate
-
-# Preview migration without writing files
-claude-arch migrate --dry-run
-
-# Force overwrite existing .claude/ directory
-claude-arch migrate --force
+claude-arch init           # Minimal structure (one file per layer)
+claude-arch init --full    # Full structure (subdirectories per layer)
 ```
 
-### 3. Validate Your Configuration
+### `migrate` — Convert existing config
 
 ```bash
-# Validate structure and schemas
-claude-arch validate
-
-# Detailed output
-claude-arch validate --verbose
+claude-arch migrate            # Convert CLAUDE.md and AGENTS.md
+claude-arch migrate --dry-run  # Preview without writing files
 ```
 
-### 4. View Active Configuration
+### `validate` — Check your configuration
 
 ```bash
-# Show merged configuration
-claude-arch show
-
-# Show with precedence chain
-claude-arch show --precedence
-
-# JSON output
-claude-arch show --json
+claude-arch validate           # Check structure and schemas
+claude-arch validate --verbose # Detailed output
 ```
 
-### 5. Health Check
+### `show` — See what's active
 
 ```bash
-# Run health check with recommendations
-claude-arch doctor
-
-# Show quick wins only
-claude-arch doctor --quick-wins
-
-# JSON output for tooling
-claude-arch doctor --json
+claude-arch show              # Show merged configuration
+claude-arch show --precedence # Show where each setting comes from
+claude-arch show --json       # JSON output
 ```
 
-## MCP Server Integration
+### `doctor` — Health check
 
-Add to your Claude Code MCP configuration:
+```bash
+claude-arch doctor            # Find issues and get recommendations
+claude-arch doctor --quick-wins # Show easy improvements
+```
+
+## MCP Server
+
+Integrate with Claude Code directly:
 
 ```bash
 claude mcp add claude-arch -- npx -y claude-arch-mcp
 ```
 
-This exposes 4 tools:
-- `resolve-config` - Get merged configuration
-- `validate-structure` - Check structure compliance
-- `detect-conflicts` - Find configuration conflicts
-- `get-recommendations` - Get improvement suggestions
+This adds 4 tools Claude can use:
+- `resolve-config` — Get the merged configuration
+- `validate-structure` — Check if structure is valid
+- `detect-conflicts` — Find conflicting settings
+- `get-recommendations` — Get improvement suggestions
+
+## Examples
+
+The `examples/` directory contains:
+
+- **simple-project** — Minimal setup with one file per layer
+- **complex-project** — Full structure with subdirectories
+- **migrated-project** — Before/after showing migration from CLAUDE.md
 
 ## Documentation
 
-- [Full Specification](docs/spec.md) — Complete architecture specification
-- [User Guide](docs/user-guide.md) — How to use the CLI and architecture
-- [Migration Guide](docs/migration-guide.md) — Moving from CLAUDE.md to new structure
+- [Full Specification](docs/spec.md) — Complete architecture details
+- [User Guide](docs/user-guide.md) — How to use the CLI
+- [Migration Guide](docs/migration-guide.md) — Moving from CLAUDE.md
 - [Best Practices](docs/best-practices.md) — Recommended patterns
-- [Troubleshooting](docs/troubleshooting.md) — Common issues and solutions
-- [Examples](examples/) — Example projects (simple, complex, migrated)
+- [Troubleshooting](docs/troubleshooting.md) — Common issues
 
 ## Development
 
 ```bash
-# Install dependencies
-npm install
-
-# Build TypeScript
-npm run build
-
-# Run tests
-npm test
-
-# Watch mode for development
-npm run dev
-
-# Lint code
-npm run lint
-
-# Format code
-npm run format
+npm install      # Install dependencies
+npm run build    # Build TypeScript
+npm test         # Run tests
+npm run dev      # Watch mode
 ```
 
-## Project Status
+## Status
 
-✅ **v0.1.0 Released** — Fully functional
-
+v0.1.0 — Core functionality complete:
 - 5-layer parser with precedence engine
-- CLI commands: `init`, `migrate`, `validate`, `show`, `doctor`
-- MCP server for Claude Code integration
-- Unit & integration tests
-- Example projects
-- Full documentation
-
-## Contributing
-
-Feedback welcome via issues and discussions.
+- All CLI commands working
+- MCP server integration
+- 332+ tests passing
 
 ## License
 
 MIT
-
----
-
-*Bringing clarity to Claude Code configuration.*
