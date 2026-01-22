@@ -13,7 +13,7 @@ npm install -g claude-arch
 
 **2. Add MCP server (so Claude can use these tools during conversations):**
 ```bash
-claude mcp add claude-arch -- npx claude-arch-mcp
+claude mcp add claude-arch -- node $(npm root -g)/claude-arch/dist/mcp/server.js
 ```
 
 That's it. Claude can now query your configuration directly.
