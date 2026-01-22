@@ -6,15 +6,19 @@ A tool that scans ALL your Claude Code configuration (10+ sources) and shows you
 
 ## Quick Start
 
-**Use inside Claude Code (recommended):**
-```bash
-claude mcp add claude-arch -- claude-arch-mcp
-```
-Then Claude can query your config directly during conversations.
-
-**Or use from terminal:**
+**1. See what's active right now:**
 ```bash
 npx claude-arch show --show-sources
+```
+
+**2. Health check your config:**
+```bash
+npx claude-arch doctor
+```
+
+**3. (Optional) Add MCP server so Claude can query config during conversations:**
+```bash
+claude mcp add claude-arch -- npx claude-arch-mcp
 ```
 
 ## The Problem

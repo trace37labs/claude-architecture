@@ -636,7 +636,7 @@ Add claude-arch as an MCP server in Claude Code:
 claude mcp add claude-arch -- npx -y claude-arch-mcp
 ```
 
-This exposes 4 tools to Claude Code.
+This exposes **10 tools** to Claude Code, giving Claude full access to configuration management.
 
 ### Available Tools
 
@@ -732,6 +732,86 @@ Get improvement suggestions.
 ```
 
 **Use case**: Find easy wins for better organization.
+
+---
+
+#### 5. `show-sources`
+
+Show ALL configuration sources (CLAUDE.md, MCP, hooks, skills, memory) in unified view.
+
+**Parameters**:
+- `path` (optional): Project path
+- `format` (optional): `unified` or `json`
+- `scope` (optional): Filter to `user`, `project`, `task`, or `system`
+- `layer` (optional): Filter to `rules`, `tools`, `methods`, `knowledge`, or `goals`
+
+**Use case**: See everything that's active and where it comes from.
+
+---
+
+#### 6. `migrate`
+
+Migrate legacy CLAUDE.md/AGENTS.md to organized .claude/ structure.
+
+**Parameters**:
+- `path` (optional): Source directory
+- `dryRun` (optional, default: true): Preview changes without applying
+- `all` (optional): Migrate all config sources (MCP, hooks, skills, memory)
+- `source` (optional): Specific source to migrate (`mcp`, `hooks`, `skills`, `memory`)
+
+**Use case**: Convert messy CLAUDE.md into organized layers.
+
+---
+
+#### 7. `init`
+
+Initialize .claude/ directory structure for a project.
+
+**Parameters**:
+- `path` (optional): Target directory
+- `minimal` (optional): Create minimal structure (single files instead of subdirs)
+- `dryRun` (optional, default: true): Preview what would be created
+
+**Use case**: Set up a new project with proper structure.
+
+---
+
+#### 8. `export-manifest`
+
+Export portable requirements manifest for environment migration.
+
+**Parameters**:
+- `path` (optional): Project path
+- `format` (optional): `yaml` or `json`
+- `platform` (optional): Target platform (`darwin`, `linux`, `windows`)
+
+**Use case**: Mac→VPS migration, team onboarding, CI/CD validation.
+
+---
+
+#### 9. `analyze-gaps`
+
+Analyze what is missing in current environment compared to manifest.
+
+**Parameters**:
+- `manifest` (optional): Path to manifest file
+- `path` (optional): Project path to compare against
+- `format` (optional): `text` or `json`
+
+**Use case**: Find missing tools, MCP servers, or environment variables.
+
+---
+
+#### 10. `show-tree`
+
+Display .claude/ directory structure as visual tree.
+
+**Parameters**:
+- `path` (optional): Project path
+- `depth` (optional): Maximum depth to display
+- `showSize` (optional): Show file sizes
+
+**Use case**: Visualize configuration structure.
 
 ---
 

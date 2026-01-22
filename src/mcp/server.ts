@@ -118,6 +118,155 @@ const tools: Tool[] = [
       required: ['path'],
     },
   },
+  {
+    name: 'show-sources',
+    description: 'Show ALL configuration sources (CLAUDE.md, MCP, hooks, skills, memory) in unified view',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        path: {
+          type: 'string',
+          description: 'Project path (default: current directory)',
+        },
+        format: {
+          type: 'string',
+          enum: ['unified', 'json'],
+          default: 'unified',
+          description: 'Output format',
+        },
+        scope: {
+          type: 'string',
+          enum: ['user', 'project', 'task', 'system'],
+          description: 'Filter to specific scope',
+        },
+        layer: {
+          type: 'string',
+          enum: ['rules', 'tools', 'methods', 'knowledge', 'goals'],
+          description: 'Filter to specific layer',
+        },
+      },
+    },
+  },
+  {
+    name: 'migrate',
+    description: 'Migrate legacy CLAUDE.md/AGENTS.md to organized .claude/ structure',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        path: {
+          type: 'string',
+          description: 'Source directory (default: current directory)',
+        },
+        dryRun: {
+          type: 'boolean',
+          default: true,
+          description: 'Preview changes without applying',
+        },
+        all: {
+          type: 'boolean',
+          default: false,
+          description: 'Migrate all config sources (MCP, hooks, skills, memory)',
+        },
+        source: {
+          type: 'string',
+          enum: ['mcp', 'hooks', 'skills', 'memory'],
+          description: 'Specific source to migrate',
+        },
+      },
+    },
+  },
+  {
+    name: 'init',
+    description: 'Initialize .claude/ directory structure for a project',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        path: {
+          type: 'string',
+          description: 'Target directory (default: current directory)',
+        },
+        minimal: {
+          type: 'boolean',
+          default: false,
+          description: 'Create minimal structure (single files instead of subdirs)',
+        },
+        dryRun: {
+          type: 'boolean',
+          default: true,
+          description: 'Preview what would be created',
+        },
+      },
+    },
+  },
+  {
+    name: 'export-manifest',
+    description: 'Export portable requirements manifest for environment migration (Mac→VPS, team onboarding)',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        path: {
+          type: 'string',
+          description: 'Project path (default: current directory)',
+        },
+        format: {
+          type: 'string',
+          enum: ['yaml', 'json'],
+          default: 'yaml',
+          description: 'Output format',
+        },
+        platform: {
+          type: 'string',
+          enum: ['darwin', 'linux', 'windows'],
+          description: 'Target platform for platform-specific filtering',
+        },
+      },
+    },
+  },
+  {
+    name: 'analyze-gaps',
+    description: 'Analyze what is missing in current environment compared to manifest',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        manifest: {
+          type: 'string',
+          description: 'Path to manifest file to compare against',
+        },
+        path: {
+          type: 'string',
+          description: 'Project path to compare against (alternative to manifest)',
+        },
+        format: {
+          type: 'string',
+          enum: ['text', 'json'],
+          default: 'text',
+          description: 'Output format',
+        },
+      },
+    },
+  },
+  {
+    name: 'show-tree',
+    description: 'Display .claude/ directory structure as visual tree',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        path: {
+          type: 'string',
+          description: 'Path to project (default: current directory)',
+        },
+        depth: {
+          type: 'number',
+          description: 'Maximum depth to display',
+        },
+        showSize: {
+          type: 'boolean',
+          default: false,
+          description: 'Show file sizes',
+        },
+      },
+    },
+  },
 ];
 
 /**

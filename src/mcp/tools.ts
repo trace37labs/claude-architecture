@@ -14,6 +14,12 @@ import { validateStructure } from '../validators/structure.js';
 import { validateSchemas } from '../validators/schema.js';
 import { detectConflicts } from '../diagnostics/conflict-detector.js';
 import { generateRecommendations } from '../diagnostics/recommendations.js';
+import { showCommand } from '../commands/show.js';
+import { migrateCommand } from '../commands/migrate.js';
+import { initCommand } from '../commands/init.js';
+import { exportCommand } from '../commands/export.js';
+import { gapsCommand } from '../commands/gaps.js';
+import { treeCommand } from '../commands/tree.js';
 
 // Schema for resolve-config tool
 const resolveConfigSchema = z.object({
@@ -286,11 +292,235 @@ export async function handleGetRecommendations(args: z.infer<typeof getRecommend
   }
 }
 
+// Schema for show-sources tool
+const showSourcesSchema = z.object({
+  path: z.string().optional().describe('Project path (default: current directory)'),
+  format: z.enum(['unified', 'json']).optional().default('unified').describe('Output format'),
+  scope: z.enum(['user', 'project', 'task', 'system']).optional().describe('Filter to specific scope'),
+  layer: z.enum(['rules', 'tools', 'methods', 'knowledge', 'goals']).optional().describe('Filter to specific layer'),
+});
+
+// Schema for migrate tool
+const migrateSchema = z.object({
+  path: z.string().optional().describe('Source directory (default: current directory)'),
+  dryRun: z.boolean().optional().default(true).describe('Preview changes without applying'),
+  all: z.boolean().optional().default(false).describe('Migrate all config sources'),
+  source: z.enum(['mcp', 'hooks', 'skills', 'memory']).optional().describe('Specific source to migrate'),
+});
+
+// Schema for init tool
+const initSchema = z.object({
+  path: z.string().optional().describe('Target directory (default: current directory)'),
+  minimal: z.boolean().optional().default(false).describe('Create minimal structure'),
+  dryRun: z.boolean().optional().default(true).describe('Preview changes without applying'),
+});
+
+// Schema for export tool
+const exportSchema = z.object({
+  path: z.string().optional().describe('Project path (default: current directory)'),
+  format: z.enum(['yaml', 'json']).optional().default('yaml').describe('Output format'),
+  platform: z.enum(['darwin', 'linux', 'windows']).optional().describe('Target platform'),
+});
+
+// Schema for gaps tool
+const gapsSchema = z.object({
+  manifest: z.string().optional().describe('Path to manifest file'),
+  path: z.string().optional().describe('Project path to compare against'),
+  format: z.enum(['text', 'json']).optional().default('text').describe('Output format'),
+});
+
+// Schema for tree tool
+const treeSchema = z.object({
+  path: z.string().optional().describe('Path to .claude/ directory'),
+  depth: z.number().optional().describe('Maximum depth to display'),
+  showSize: z.boolean().optional().default(false).describe('Show file sizes'),
+});
+
+/**
+ * Show all configuration sources (unified view)
+ */
+async function handleShowSources(args: z.infer<typeof showSourcesSchema>): Promise<CallToolResult> {
+  try {
+    // Capture console output
+    let output = '';
+    const originalLog = console.log;
+    console.log = (...msgs: any[]) => { output += msgs.join(' ') + '\n'; };
+
+    await showCommand({
+      targetDir: args.path || process.cwd(),
+      showSources: true,
+      format: args.format === 'json' ? 'json' : 'unified',
+      scope: args.scope,
+      layer: args.layer as any,
+      noColor: true,
+    });
+
+    console.log = originalLog;
+
+    return {
+      content: [{ type: 'text', text: output || 'No configuration found' }],
+    };
+  } catch (error) {
+    return {
+      content: [{ type: 'text', text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+      isError: true,
+    };
+  }
+}
+
+/**
+ * Migrate legacy configuration
+ */
+async function handleMigrate(args: z.infer<typeof migrateSchema>): Promise<CallToolResult> {
+  try {
+    let output = '';
+    const originalLog = console.log;
+    console.log = (...msgs: any[]) => { output += msgs.join(' ') + '\n'; };
+
+    await migrateCommand({
+      sourceDir: args.path || process.cwd(),
+      dryRun: args.dryRun,
+      all: args.all,
+      source: args.source,
+    });
+
+    console.log = originalLog;
+
+    return {
+      content: [{ type: 'text', text: output || 'Migration complete' }],
+    };
+  } catch (error) {
+    return {
+      content: [{ type: 'text', text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+      isError: true,
+    };
+  }
+}
+
+/**
+ * Initialize .claude/ structure
+ */
+async function handleInit(args: z.infer<typeof initSchema>): Promise<CallToolResult> {
+  try {
+    let output = '';
+    const originalLog = console.log;
+    console.log = (...msgs: any[]) => { output += msgs.join(' ') + '\n'; };
+
+    await initCommand({
+      targetDir: args.path || process.cwd(),
+      minimal: args.minimal,
+      dryRun: args.dryRun,
+    });
+
+    console.log = originalLog;
+
+    return {
+      content: [{ type: 'text', text: output || 'Initialization complete' }],
+    };
+  } catch (error) {
+    return {
+      content: [{ type: 'text', text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+      isError: true,
+    };
+  }
+}
+
+/**
+ * Export portable manifest
+ */
+async function handleExport(args: z.infer<typeof exportSchema>): Promise<CallToolResult> {
+  try {
+    let output = '';
+    const originalLog = console.log;
+    console.log = (...msgs: any[]) => { output += msgs.join(' ') + '\n'; };
+
+    await exportCommand({
+      targetDir: args.path || process.cwd(),
+      json: args.format === 'json',
+      platform: args.platform,
+    });
+
+    console.log = originalLog;
+
+    return {
+      content: [{ type: 'text', text: output || 'Export complete' }],
+    };
+  } catch (error) {
+    return {
+      content: [{ type: 'text', text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+      isError: true,
+    };
+  }
+}
+
+/**
+ * Analyze environment gaps
+ */
+async function handleGaps(args: z.infer<typeof gapsSchema>): Promise<CallToolResult> {
+  try {
+    let output = '';
+    const originalLog = console.log;
+    console.log = (...msgs: any[]) => { output += msgs.join(' ') + '\n'; };
+
+    await gapsCommand({
+      manifest: args.manifest,
+      from: args.path,
+      json: args.format === 'json',
+    });
+
+    console.log = originalLog;
+
+    return {
+      content: [{ type: 'text', text: output || 'Gap analysis complete' }],
+    };
+  } catch (error) {
+    return {
+      content: [{ type: 'text', text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+      isError: true,
+    };
+  }
+}
+
+/**
+ * Show directory tree
+ */
+async function handleTree(args: z.infer<typeof treeSchema>): Promise<CallToolResult> {
+  try {
+    let output = '';
+    const originalLog = console.log;
+    console.log = (...msgs: any[]) => { output += msgs.join(' ') + '\n'; };
+
+    await treeCommand({
+      targetDir: args.path || process.cwd(),
+      depth: args.depth,
+      size: args.showSize,
+      noColor: true,
+    });
+
+    console.log = originalLog;
+
+    return {
+      content: [{ type: 'text', text: output || 'No .claude/ directory found' }],
+    };
+  } catch (error) {
+    return {
+      content: [{ type: 'text', text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+      isError: true,
+    };
+  }
+}
+
 export const toolSchemas = {
   'resolve-config': resolveConfigSchema,
   'validate-structure': validateStructureSchema,
   'detect-conflicts': detectConflictsSchema,
   'get-recommendations': getRecommendationsSchema,
+  'show-sources': showSourcesSchema,
+  'migrate': migrateSchema,
+  'init': initSchema,
+  'export-manifest': exportSchema,
+  'analyze-gaps': gapsSchema,
+  'show-tree': treeSchema,
 };
 
 export const toolHandlers = {
@@ -298,4 +528,10 @@ export const toolHandlers = {
   'validate-structure': handleValidateStructure,
   'detect-conflicts': handleDetectConflicts,
   'get-recommendations': handleGetRecommendations,
+  'show-sources': handleShowSources,
+  'migrate': handleMigrate,
+  'init': handleInit,
+  'export-manifest': handleExport,
+  'analyze-gaps': handleGaps,
+  'show-tree': handleTree,
 };
