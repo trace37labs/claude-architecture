@@ -156,8 +156,11 @@ This exposes 4 tools:
 ## Documentation
 
 - [Full Specification](docs/spec.md) — Complete architecture specification
-- [Examples](examples/) — Example projects demonstrating different patterns
-- [Migration Guide](docs/migration.md) — Moving from current config *(coming soon)*
+- [User Guide](docs/user-guide.md) — How to use the CLI and architecture
+- [Migration Guide](docs/migration-guide.md) — Moving from CLAUDE.md to new structure
+- [Best Practices](docs/best-practices.md) — Recommended patterns
+- [Troubleshooting](docs/troubleshooting.md) — Common issues and solutions
+- [Examples](examples/) — Example projects (simple, complex, migrated)
 
 ## Development
 
@@ -183,18 +186,14 @@ npm run format
 
 ## Project Status
 
-✅ **Phase 1-3 Complete** — Core implementation finished (v0.1.0)
+✅ **v0.1.0 Released** — Fully functional
 
-**Completed:**
-- ✅ 5-layer parser and precedence engine
-- ✅ CLI commands (init, migrate, validate, show, doctor)
-- ✅ MCP server integration
-- ✅ 332+ unit tests (all passing)
-- ✅ Example projects
-- ✅ npm package ready
-
-**In Progress:**
-- 📝 Video tutorials
+- 5-layer parser with precedence engine
+- CLI commands: `init`, `migrate`, `validate`, `show`, `doctor`
+- MCP server for Claude Code integration
+- Unit & integration tests
+- Example projects
+- Full documentation
 
 ## Contributing
 
