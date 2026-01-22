@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.10] - 2026-01-22
+
+### Added
+- `claude-arch tree` command to display .claude/ directory structure as a visual tree
+- Options for tree command: `--depth`, `--all`, `--size`, `--no-color`
+- Color-coded file types (directories, markdown, JSON/YAML)
+- Automatic sorting (directories before files, alphabetical)
+- File size formatting (B, K, M) with `--size` option
+
+### Fixed
+- Directory and file counting logic in tree display
+
+## [0.1.9] - 2026-01-22
+
+### Fixed
+- Version number consistency across package.json, CLI, and version command
+
+### Verified
+- All features from vision document fully implemented and tested
+- Complete 5-layer architecture working correctly
+- Universal scanner covers all configuration sources
+- Platform-aware export with intelligent filtering
+- Environment gap analysis with automated fixes
+- Documentation 100% accurate and up-to-date
+
 ## [0.1.8] - 2026-01-22
 
 ### Fixed

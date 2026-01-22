@@ -13,6 +13,7 @@ import { showCommand } from './commands/show.js';
 import { doctorCommand } from './commands/doctor.js';
 import { exportCommand } from './commands/export.js';
 import { gapsCommand } from './commands/gaps.js';
+import { treeCommand } from './commands/tree.js';
 import { logger } from './utils/logger.js';
 
 const program = new Command();
@@ -20,7 +21,7 @@ const program = new Command();
 program
   .name('claude-arch')
   .description('5-layer configuration system for Claude Code')
-  .version('0.1.8');
+  .version('0.1.10');
 
 // Init command
 program
@@ -191,12 +192,37 @@ program
     }
   });
 
+// Tree command
+program
+  .command('tree')
+  .description('Display .claude/ directory structure as a visual tree')
+  .option('-t, --target-dir <path>', 'Directory to show tree for (default: current)')
+  .option('-d, --depth <number>', 'Maximum depth to traverse (default: 10)')
+  .option('-a, --all', 'Show hidden files')
+  .option('-s, --size', 'Show file sizes')
+  .option('--no-color', 'Disable color output')
+  .action(async (options) => {
+    try {
+      await treeCommand({
+        ...options,
+        depth: options.depth ? parseInt(options.depth, 10) : undefined,
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        logger.error(error.message);
+      } else {
+        logger.error('An unknown error occurred');
+      }
+      process.exit(1);
+    }
+  });
+
 // Version command (kept for backward compatibility)
 program
   .command('version')
   .description('Show version information')
   .action(() => {
-  console.log('claude-arch v0.1.8');
+  console.log('claude-arch v0.1.10');
   });
 
 program.parse(process.argv);
