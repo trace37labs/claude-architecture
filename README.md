@@ -2,9 +2,20 @@
 
 **Status: ✅ Production-Ready**
 
-A CLI tool that organises Claude Code configuration into a clear, layered structure.
+A tool that scans ALL your Claude Code configuration (10+ sources) and shows you what's actually active.
 
-Answer "what's active?" in seconds: `claude-arch show --format unified`
+## Quick Start
+
+**Use inside Claude Code (recommended):**
+```bash
+claude mcp add claude-arch -- claude-arch-mcp
+```
+Then Claude can query your config directly during conversations.
+
+**Or use from terminal:**
+```bash
+npx claude-arch show --show-sources
+```
 
 ## The Problem
 
