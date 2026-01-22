@@ -6,7 +6,7 @@
  */
 
 import { logger } from '../utils/logger.js';
-import { scanForClaudeDirectories } from '../scanner.js';
+import { scanForClaudeDirectories, scanAllConfigSources } from '../scanner.js';
 import { loadAllScopes } from '../loader.js';
 import { resolveForTask } from '../engine/resolver.js';
 import { ScopeLevel } from '../types/scope.js';
@@ -20,6 +20,7 @@ import {
   RecommendationResult,
   Recommendation,
 } from '../diagnostics/recommendations.js';
+import type { UniversalScanResult } from '../types/sources.js';
 
 export interface DoctorOptions {
   /** Directory to analyze (default: current directory) */
@@ -45,6 +46,8 @@ export interface DoctorReport {
   recommendations?: RecommendationResult;
   /** Overall assessment */
   assessment: 'healthy' | 'needs-attention' | 'critical';
+  /** Configuration fragmentation analysis */
+  fragmentation?: UniversalScanResult['fragmentation'];
 }
 
 /**
@@ -96,10 +99,25 @@ export async function doctorCommand(options: DoctorOptions = {}): Promise<Doctor
     scopeMap.get(ScopeLevel.System)
   );
 
-  // Step 4: Detect conflicts
+  // Step 4: Scan for configuration fragmentation
+  const universalScan = scanAllConfigSources({ cwd: targetDir });
+
+  // Step 5: Detect conflicts
   const conflictResults = detectConflicts(context.config, context.scopes);
 
-  // Step 5: Generate recommendations (if requested)
+  // Adjust health score if fragmentation is detected
+  let adjustedHealthScore = conflictResults.healthScore;
+  if (universalScan.fragmentation.duplicates.length > 0) {
+    // Deduct 5 points per duplicate
+    adjustedHealthScore -= universalScan.fragmentation.duplicates.length * 5;
+  }
+  if (universalScan.fragmentation.legacy.length > 0) {
+    // Deduct 3 points per legacy file
+    adjustedHealthScore -= universalScan.fragmentation.legacy.length * 3;
+  }
+  adjustedHealthScore = Math.max(0, Math.min(100, adjustedHealthScore));
+
+  // Step 6: Generate recommendations (if requested)
   let recommendationResults: RecommendationResult | undefined;
   if (options.recommendations) {
     recommendationResults = generateRecommendations(
@@ -109,17 +127,18 @@ export async function doctorCommand(options: DoctorOptions = {}): Promise<Doctor
     );
   }
 
-  // Step 6: Determine overall assessment
-  const assessment = getAssessment(conflictResults.healthScore);
+  // Step 7: Determine overall assessment
+  const assessment = getAssessment(adjustedHealthScore);
 
   const report: DoctorReport = {
-    healthScore: conflictResults.healthScore,
+    healthScore: adjustedHealthScore,
     conflicts: conflictResults,
     recommendations: recommendationResults,
     assessment,
+    fragmentation: universalScan.fragmentation,
   };
 
-  // Step 7: Display results
+  // Step 8: Display results
   if (format === 'json') {
     displayJson(report);
   } else {
@@ -168,6 +187,12 @@ function displayText(report: DoctorReport, options: DoctorOptions): void {
   }
   console.log('');
 
+  // Display fragmentation warnings
+  if (report.fragmentation &&
+      (report.fragmentation.duplicates.length > 0 || report.fragmentation.legacy.length > 0)) {
+    displayFragmentation(report.fragmentation, options);
+  }
+
   // Display conflicts
   if (conflicts.conflicts.length > 0) {
     displayConflicts(conflicts, options);
@@ -180,7 +205,12 @@ function displayText(report: DoctorReport, options: DoctorOptions): void {
 
   // Footer
   if (assessment === 'healthy') {
-    logger.success('✅ Configuration looks good!');
+    if (report.fragmentation?.legacy.length === 0) {
+      logger.success('✅ Configuration looks good!');
+    } else {
+      logger.success('✅ Configuration is functional but has legacy files');
+      logger.info('Run `claude-arch migrate --all` to modernize');
+    }
   } else if (assessment === 'needs-attention') {
     logger.warn('⚠️  Configuration needs attention');
     logger.info('Review warnings and consider recommendations');
@@ -188,6 +218,44 @@ function displayText(report: DoctorReport, options: DoctorOptions): void {
     logger.error('🚨 Configuration has critical issues');
     logger.info('Fix errors before proceeding');
   }
+}
+
+/**
+ * Display configuration fragmentation warnings
+ */
+function displayFragmentation(
+  fragmentation: UniversalScanResult['fragmentation'],
+  _options: DoctorOptions
+): void {
+  console.log('⚠️  CONFIGURATION FRAGMENTATION DETECTED:');
+  console.log('');
+
+  // Show duplicates
+  if (fragmentation.duplicates.length > 0) {
+    console.log('  🔄 Duplicate definitions:');
+    console.log('');
+    for (const dup of fragmentation.duplicates) {
+      console.log(`     • "${dup.item}" defined in multiple places:`);
+      for (const source of dup.sources) {
+        console.log(`       - ${source}`);
+      }
+      console.log('');
+    }
+  }
+
+  // Show legacy files
+  if (fragmentation.legacy.length > 0) {
+    console.log('  📜 Legacy files (consider migrating to new structure):');
+    console.log('');
+    for (const file of fragmentation.legacy) {
+      console.log(`     • ${file}`);
+    }
+    console.log('');
+  }
+
+  console.log('  💡 Recommendation: Run `claude-arch migrate --all` to consolidate configuration');
+  console.log('  💡 Benefit: Clearer configuration, easier to maintain, less chance of conflicts');
+  console.log('');
 }
 
 /**

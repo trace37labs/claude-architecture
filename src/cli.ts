@@ -51,6 +51,8 @@ program
   .option('-f, --force', 'Overwrite existing .claude/ directory')
   .option('-b, --backup', 'Backup original files before migration')
   .option('--dry-run', 'Show what would be migrated without migrating')
+  .option('--all', 'Migrate all configuration sources (MCP, hooks, skills, memory)')
+  .option('--source <type>', 'Migrate specific source: mcp, hooks, skills, or memory')
   .action(async (options) => {
     try {
       await migrateCommand(options);
@@ -71,6 +73,7 @@ program
   .option('-t, --target-dir <path>', 'Directory to validate (default: current)')
   .option('--structure-only', 'Only validate structure, skip schema validation')
   .option('-v, --verbose', 'Verbose output with detailed errors and suggestions')
+  .option('--check-all-sources', 'Check all configuration sources, not just .claude/')
   .action(async (options) => {
     try {
       const report = await validateCommand(options);
@@ -92,12 +95,13 @@ program
   .command('show')
   .description('Display active configuration with source attribution')
   .option('-t, --target-dir <path>', 'Directory to show config for (default: current)')
-  .option('-f, --format <type>', 'Display format: tree, precedence, or json (default: tree)')
+  .option('-f, --format <type>', 'Display format: tree, precedence, json, or unified (default: tree)')
   .option('-l, --layer <layer>', 'Show specific layer only')
   .option('-v, --verbose', 'Verbose output with full details')
   .option('-c, --compact', 'Compact output (minimal)')
   .option('--no-color', 'Disable color output')
   .option('--show-empty', 'Show empty layers/scopes')
+  .option('--show-sources', 'Show all configuration sources (enables unified format)')
   .action(async (options) => {
     try {
       await showCommand(options);

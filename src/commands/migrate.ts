@@ -9,6 +9,7 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { logger } from '../utils/logger.js';
 import { parseLegacyFiles } from '../parsers/legacy-parser.js';
+import { scanAllConfigSources } from '../scanner.js';
 import type { LayerContent } from '../types/layers.js';
 import { LayerType } from '../types/layers.js';
 import type {
@@ -33,6 +34,10 @@ export interface MigrateOptions {
   dryRun?: boolean;
   /** Backup original files before migration */
   backup?: boolean;
+  /** Migrate all configuration sources (not just legacy files) */
+  all?: boolean;
+  /** Specific source to migrate: mcp, hooks, skills, memory */
+  source?: 'mcp' | 'hooks' | 'skills' | 'memory';
 }
 
 export interface MigrationReport {
@@ -64,6 +69,11 @@ export async function migrateCommand(options: MigrateOptions = {}): Promise<Migr
     warnings: [],
   };
 
+  // If --all or --source specified, use universal migration
+  if (options.all || options.source) {
+    return migrateAllSources(options, report);
+  }
+
   // Find legacy files in source directory
   const legacyFiles = await findLegacyFiles(sourceDir);
 
@@ -72,7 +82,8 @@ export async function migrateCommand(options: MigrateOptions = {}): Promise<Migr
     return report;
   }
 
-  // Check if .claude/ already exists
+  // Check if .claude/ already exists and preserve important content
+  let existingContent: Map<string, string> | undefined;
   try {
     await fs.access(claudeDir);
     if (!options.force) {
@@ -81,7 +92,9 @@ export async function migrateCommand(options: MigrateOptions = {}): Promise<Migr
         'Use --force to overwrite'
       );
     }
-    logger.warn('Overwriting existing .claude/ directory');
+    logger.warn('Overwriting existing .claude/ directory (preserving skills/ and *.local.* files)');
+    // Preserve existing content before overwriting
+    existingContent = await preserveExistingContent(claudeDir);
   } catch (err: any) {
     if (err.code !== 'ENOENT') {
       throw err;
@@ -121,6 +134,11 @@ export async function migrateCommand(options: MigrateOptions = {}): Promise<Migr
     await createFullMigration(claudeDir, parseResult.layers, report, options.dryRun);
   }
 
+  // Restore preserved content
+  if (existingContent && !options.dryRun) {
+    await restorePreservedContent(claudeDir, existingContent, report);
+  }
+
   // Log summary
   if (!options.dryRun) {
     logger.success(`Migrated ${report.migrated.length} file(s) to ${claudeDir}`);
@@ -145,18 +163,28 @@ export async function migrateCommand(options: MigrateOptions = {}): Promise<Migr
 
 /**
  * Find CLAUDE.md and AGENTS.md files in a directory
+ * Checks both root and .claude/ subdirectory
  */
 async function findLegacyFiles(dir: string): Promise<Map<string, string>> {
   const files = new Map<string, string>();
 
-  const filenames = ['CLAUDE.md', 'AGENTS.md'];
+  const locations = [
+    { dir: dir, name: 'CLAUDE.md' },
+    { dir: dir, name: 'AGENTS.md' },
+    { dir: path.join(dir, '.claude'), name: 'CLAUDE.md' },
+    { dir: path.join(dir, '.claude'), name: 'AGENTS.md' },
+  ];
 
-  for (const filename of filenames) {
-    const filepath = path.join(dir, filename);
+  for (const { dir: searchDir, name: filename } of locations) {
+    const filepath = path.join(searchDir, filename);
     try {
       const content = await fs.readFile(filepath, 'utf-8');
-      files.set(filename, content);
-      logger.debug(`Found ${filename}`);
+      // Use a unique key for .claude/ files to avoid conflicts
+      const key = searchDir.includes('.claude') ? `.claude/${filename}` : filename;
+      if (!files.has(key)) {
+        files.set(key, content);
+        logger.debug(`Found ${filepath}`);
+      }
     } catch (err: any) {
       if (err.code !== 'ENOENT') {
         throw err;
@@ -183,6 +211,79 @@ async function backupLegacyFiles(files: Map<string, string>, dir: string): Promi
       logger.debug(`Backed up ${filename} to ${filename}.bak`);
     } catch (err) {
       logger.warn(`Failed to backup ${filename}: ${err}`);
+    }
+  }
+}
+
+/**
+ * Preserve existing .claude/ content that should not be overwritten
+ * - skills/ directory (imported packages)
+ * - *.local.* files (local settings)
+ */
+async function preserveExistingContent(claudeDir: string): Promise<Map<string, string>> {
+  const preserved = new Map<string, string>();
+
+  // Preserve skills/ directory
+  const skillsDir = path.join(claudeDir, 'skills');
+  try {
+    await fs.access(skillsDir);
+    const skillFiles = await fs.readdir(skillsDir, { recursive: true, withFileTypes: true });
+    for (const file of skillFiles) {
+      if (file.isFile()) {
+        const filepath = path.join(file.path, file.name);
+        const relPath = path.relative(claudeDir, filepath);
+        const content = await fs.readFile(filepath, 'utf-8');
+        preserved.set(relPath, content);
+        logger.debug(`Preserved ${relPath}`);
+      }
+    }
+  } catch (err: any) {
+    if (err.code !== 'ENOENT') {
+      logger.warn(`Could not preserve skills/: ${err}`);
+    }
+  }
+
+  // Preserve *.local.* files
+  try {
+    const allFiles = await fs.readdir(claudeDir, { recursive: true, withFileTypes: true });
+    for (const file of allFiles) {
+      if (file.isFile() && /\.local\./.test(file.name)) {
+        const filepath = path.join(file.path, file.name);
+        const relPath = path.relative(claudeDir, filepath);
+        const content = await fs.readFile(filepath, 'utf-8');
+        preserved.set(relPath, content);
+        logger.debug(`Preserved ${relPath}`);
+      }
+    }
+  } catch (err: any) {
+    logger.warn(`Could not preserve *.local.* files: ${err}`);
+  }
+
+  return preserved;
+}
+
+/**
+ * Restore preserved content after migration
+ */
+async function restorePreservedContent(
+  claudeDir: string,
+  preserved: Map<string, string>,
+  report: MigrationReport
+): Promise<void> {
+  if (preserved.size === 0) return;
+
+  logger.info(`Restoring ${preserved.size} preserved file(s)...`);
+
+  for (const [relPath, content] of preserved.entries()) {
+    const fullPath = path.join(claudeDir, relPath);
+    const dir = path.dirname(fullPath);
+
+    try {
+      await fs.mkdir(dir, { recursive: true });
+      await fs.writeFile(fullPath, content, 'utf-8');
+      logger.debug(`Restored ${relPath}`);
+    } catch (err) {
+      report.warnings.push(`Failed to restore ${relPath}: ${err}`);
     }
   }
 }
@@ -292,15 +393,57 @@ async function createFullMigration(
   if (dryRun) {
     logger.info('Would create full structure:');
     logger.info(`.claude/`);
-    const dirs = new Set<string>();
+
+    // Build a proper tree structure
+    interface TreeNode {
+      name: string;
+      children: Map<string, TreeNode>;
+      files: string[];
+    }
+
+    const root: TreeNode = { name: '.claude', children: new Map(), files: [] };
+
+    // Build tree from paths
     structure.forEach((f) => {
-      const dir = path.dirname(f.path);
-      if (dir !== '.') dirs.add(dir);
+      const parts = f.path.split('/');
+      let current = root;
+
+      // Navigate/create directory structure
+      for (let i = 0; i < parts.length - 1; i++) {
+        const part = parts[i];
+        if (!current.children.has(part)) {
+          current.children.set(part, { name: part, children: new Map(), files: [] });
+        }
+        current = current.children.get(part)!;
+      }
+
+      // Add file to leaf directory
+      current.files.push(parts[parts.length - 1]);
     });
-    Array.from(dirs)
-      .sort()
-      .forEach((dir) => logger.info(`  ├── ${dir}/`));
-    structure.forEach((f) => logger.info(`  │   ├── ${path.basename(f.path)}`));
+
+    // Display tree recursively
+    function displayTree(node: TreeNode, prefix: string = '  ') {
+      // Display directories first
+      const dirs = Array.from(node.children.entries()).sort(([a], [b]) => a.localeCompare(b));
+      dirs.forEach(([name, child], idx) => {
+        const isLastDir = idx === dirs.length - 1 && node.files.length === 0;
+        const branch = isLastDir ? '└──' : '├──';
+        logger.info(`${prefix}${branch} ${name}/`);
+
+        const newPrefix = prefix + (isLastDir ? '    ' : '│   ');
+        displayTree(child, newPrefix);
+      });
+
+      // Display files
+      node.files.sort().forEach((file, idx) => {
+        const isLastFile = idx === node.files.length - 1;
+        const branch = isLastFile ? '└──' : '├──';
+        logger.info(`${prefix}${branch} ${file}`);
+      });
+    }
+
+    displayTree(root);
+
     report.created = structure.map((f) => f.path);
     return;
   }
@@ -752,4 +895,288 @@ function extractSectionByKeyword(content: string, pattern: RegExp): string | nul
   }
 
   return matchingLines.length > 0 ? matchingLines.join('\n') : null;
+}
+
+/**
+ * Migrate ALL configuration sources to new layered structure
+ */
+async function migrateAllSources(
+  options: MigrateOptions,
+  report: MigrationReport
+): Promise<MigrationReport> {
+  const sourceDir = options.sourceDir || process.cwd();
+  const targetDir = options.targetDir || sourceDir;
+  const claudeDir = path.join(targetDir, '.claude');
+
+  logger.info('Scanning all configuration sources...');
+  const scanResult = scanAllConfigSources({ cwd: sourceDir });
+  const { sources } = scanResult;
+
+  if (options.dryRun) {
+    logger.info('Dry run - would migrate:');
+  }
+
+  // Migrate based on --source flag or all sources
+  const sourcesToMigrate = options.source ? [options.source] : ['mcp', 'hooks', 'skills', 'memory'];
+
+  for (const sourceType of sourcesToMigrate) {
+    switch (sourceType) {
+      case 'mcp':
+        await migrateMCPConfig(sources, claudeDir, report, options);
+        break;
+      case 'hooks':
+        await migrateHooks(sources, claudeDir, report, options);
+        break;
+      case 'skills':
+        await migrateSkills(sources, claudeDir, report, options);
+        break;
+      case 'memory':
+        await migrateMemory(sources, claudeDir, report, options);
+        break;
+    }
+  }
+
+  // Also migrate legacy files if present
+  const legacyFiles = await findLegacyFiles(sourceDir);
+  if (legacyFiles.size > 0 && !options.source) {
+    logger.info('Also migrating legacy CLAUDE.md/AGENTS.md...');
+    const parseResult = parseLegacyFiles(legacyFiles);
+
+    if (options.minimal) {
+      await createMinimalMigration(claudeDir, parseResult.layers, report, options.dryRun);
+    } else {
+      await createFullMigration(claudeDir, parseResult.layers, report, options.dryRun);
+    }
+
+    for (const filename of legacyFiles.keys()) {
+      report.migrated.push(filename);
+    }
+  }
+
+  if (!options.dryRun) {
+    logger.success(`Migration complete! Created ${report.created.length} file(s) in ${claudeDir}`);
+  } else {
+    logger.info(`Dry run complete - would create ${report.created.length} file(s)`);
+  }
+
+  return report;
+}
+
+/**
+ * Migrate MCP configuration to .claude/tools/mcp.yaml
+ */
+async function migrateMCPConfig(
+  sources: any,
+  claudeDir: string,
+  report: MigrationReport,
+  options: MigrateOptions
+): Promise<void> {
+  const mcpServers = sources.projectMcp || [];
+  if (mcpServers.length === 0) {
+    logger.info('No MCP servers to migrate');
+    return;
+  }
+
+  const outputPath = path.join(claudeDir, 'tools', 'mcp.yaml');
+
+  if (options.dryRun) {
+    logger.info(`Would migrate ${mcpServers.length} MCP server(s) → ${outputPath}`);
+    report.created.push('tools/mcp.yaml');
+    return;
+  }
+
+  await fs.mkdir(path.dirname(outputPath), { recursive: true });
+
+  const content = [
+    '# MCP Servers Configuration',
+    '# Migrated from .mcp.json or settings.json',
+    '',
+    'servers:',
+  ];
+
+  for (const server of mcpServers) {
+    content.push(`  ${server.name}:`);
+    content.push(`    command: ${server.command}`);
+    if (server.args && server.args.length > 0) {
+      content.push(`    args: [${server.args.map((a: string) => `'${a}'`).join(', ')}]`);
+    }
+    if (server.env) {
+      content.push('    env:');
+      for (const [key, value] of Object.entries(server.env)) {
+        content.push(`      ${key}: "${value}"`);
+      }
+    }
+  }
+
+  await fs.writeFile(outputPath, content.join('\n'), 'utf-8');
+  report.created.push('tools/mcp.yaml');
+  report.migrated.push('MCP configuration');
+  logger.info(`Migrated ${mcpServers.length} MCP server(s) → tools/mcp.yaml`);
+}
+
+/**
+ * Migrate hooks to .claude/tools/hooks.yaml
+ */
+async function migrateHooks(
+  sources: any,
+  claudeDir: string,
+  report: MigrationReport,
+  options: MigrateOptions
+): Promise<void> {
+  const hooks = sources.projectHooks || [];
+  if (hooks.length === 0) {
+    logger.info('No hooks to migrate');
+    return;
+  }
+
+  const outputPath = path.join(claudeDir, 'tools', 'hooks.yaml');
+
+  if (options.dryRun) {
+    logger.info(`Would migrate ${hooks.length} hook(s) → ${outputPath}`);
+    report.created.push('tools/hooks.yaml');
+    return;
+  }
+
+  await fs.mkdir(path.dirname(outputPath), { recursive: true });
+
+  const content = [
+    '# Hooks Configuration',
+    '# Migrated from settings.json',
+    '',
+    'hooks:',
+  ];
+
+  for (const hook of hooks) {
+    content.push(`  ${hook.name}:`);
+    content.push(`    type: ${hook.type}`);
+    content.push(`    command: ${hook.command}`);
+    if (hook.cwd) {
+      content.push(`    cwd: ${hook.cwd}`);
+    }
+    content.push(`    enabled: ${hook.enabled}`);
+  }
+
+  await fs.writeFile(outputPath, content.join('\n'), 'utf-8');
+  report.created.push('tools/hooks.yaml');
+  report.migrated.push('Hooks configuration');
+  logger.info(`Migrated ${hooks.length} hook(s) → tools/hooks.yaml`);
+}
+
+/**
+ * Flatten skills into layer directories
+ */
+async function migrateSkills(
+  sources: any,
+  claudeDir: string,
+  report: MigrationReport,
+  options: MigrateOptions
+): Promise<void> {
+  const skills = sources.projectSkills || [];
+  if (skills.length === 0) {
+    logger.info('No skills to migrate');
+    return;
+  }
+
+  logger.info(`Migrating ${skills.length} skill(s) into layers...`);
+
+  for (const skill of skills) {
+    // Migrate workflows to methods/
+    if (skill.workflows && skill.workflows.length > 0) {
+      for (const workflowName of skill.workflows) {
+        const workflowPath = path.join(
+          path.dirname(skill.path),
+          'workflows',
+          `${workflowName}.md`
+        );
+
+        if (await fileExists(workflowPath)) {
+          const content = await fs.readFile(workflowPath, 'utf-8');
+          const outputPath = path.join(claudeDir, 'methods', 'workflows', `${skill.id}-${workflowName}.md`);
+
+          if (options.dryRun) {
+            logger.info(`Would migrate ${workflowName} → methods/workflows/`);
+            report.created.push(`methods/workflows/${skill.id}-${workflowName}.md`);
+          } else {
+            await fs.mkdir(path.dirname(outputPath), { recursive: true });
+            await fs.writeFile(outputPath, content, 'utf-8');
+            report.created.push(`methods/workflows/${skill.id}-${workflowName}.md`);
+          }
+        }
+      }
+    }
+
+    // Migrate references to knowledge/
+    if (skill.references && skill.references.length > 0) {
+      for (const refName of skill.references) {
+        const refPath = path.join(
+          path.dirname(skill.path),
+          'references',
+          `${refName}.md`
+        );
+
+        if (await fileExists(refPath)) {
+          const content = await fs.readFile(refPath, 'utf-8');
+          const outputPath = path.join(claudeDir, 'knowledge', 'references', `${skill.id}-${refName}.md`);
+
+          if (options.dryRun) {
+            logger.info(`Would migrate ${refName} → knowledge/references/`);
+            report.created.push(`knowledge/references/${skill.id}-${refName}.md`);
+          } else {
+            await fs.mkdir(path.dirname(outputPath), { recursive: true });
+            await fs.writeFile(outputPath, content, 'utf-8');
+            report.created.push(`knowledge/references/${skill.id}-${refName}.md`);
+          }
+        }
+      }
+    }
+  }
+
+  report.migrated.push(`${skills.length} skill(s)`);
+  logger.info(`Migrated ${skills.length} skill(s) into layered structure`);
+}
+
+/**
+ * Migrate user memory to knowledge/
+ */
+async function migrateMemory(
+  sources: any,
+  claudeDir: string,
+  report: MigrationReport,
+  options: MigrateOptions
+): Promise<void> {
+  const memoryFiles = sources.userMemory || [];
+  if (memoryFiles.length === 0) {
+    logger.info('No user memory to migrate');
+    return;
+  }
+
+  logger.info(`Migrating ${memoryFiles.length} memory file(s)...`);
+
+  for (const mem of memoryFiles) {
+    const outputPath = path.join(claudeDir, 'knowledge', 'memory', mem.name);
+
+    if (options.dryRun) {
+      logger.info(`Would migrate ${mem.name} → knowledge/memory/`);
+      report.created.push(`knowledge/memory/${mem.name}`);
+    } else {
+      await fs.mkdir(path.dirname(outputPath), { recursive: true });
+      await fs.writeFile(outputPath, mem.content, 'utf-8');
+      report.created.push(`knowledge/memory/${mem.name}`);
+    }
+  }
+
+  report.migrated.push(`${memoryFiles.length} memory file(s)`);
+  logger.info(`Migrated ${memoryFiles.length} memory file(s) → knowledge/memory/`);
+}
+
+/**
+ * Check if file exists
+ */
+async function fileExists(filepath: string): Promise<boolean> {
+  try {
+    await fs.access(filepath);
+    return true;
+  } catch {
+    return false;
+  }
 }

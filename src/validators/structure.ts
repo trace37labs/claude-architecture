@@ -31,7 +31,7 @@ export interface StructureValidationResult {
   /** Whether structure is valid */
   valid: boolean;
   /** Detected structure type */
-  structureType: 'minimal' | 'full' | 'mixed' | 'unknown';
+  structureType: 'minimal' | 'full' | 'mixed' | 'legacy' | 'unknown';
   /** Validation errors */
   errors: StructureError[];
   /** Validation warnings */
@@ -93,6 +93,14 @@ export async function validateStructure(
     await validateMinimalStructure(claudeDir, errors, warnings);
   } else if (structureType === 'full') {
     await validateFullStructure(claudeDir, errors, warnings);
+  } else if (structureType === 'legacy') {
+    // Legacy structure is valid, but recommend migration
+    warnings.push({
+      type: 'invalid-structure',
+      message: 'Legacy configuration files detected (CLAUDE.md, AGENTS.md, skills/)',
+      path: claudeDir,
+      suggestion: 'Consider running `claude-arch migrate --all` to migrate to new layered structure',
+    });
   } else if (structureType === 'mixed') {
     warnings.push({
       type: 'invalid-structure',
@@ -125,7 +133,7 @@ export async function validateStructure(
  */
 async function detectStructureType(
   claudeDir: string
-): Promise<'minimal' | 'full' | 'mixed' | 'unknown'> {
+): Promise<'minimal' | 'full' | 'mixed' | 'legacy' | 'unknown'> {
   try {
     const entries = await fs.readdir(claudeDir, { withFileTypes: true });
 
@@ -137,12 +145,22 @@ async function detectStructureType(
       (e) => e.isDirectory() && ['rules', 'tools', 'methods', 'knowledge', 'goals'].includes(e.name)
     );
 
+    const hasLegacyFiles = entries.some(
+      (e) => e.isFile() && (e.name === 'CLAUDE.md' || e.name === 'AGENTS.md')
+    );
+
+    const hasSkillsOrCommands = entries.some(
+      (e) => e.isDirectory() && (e.name === 'skills' || e.name === 'commands')
+    );
+
     if (hasMinimalFiles && hasFullDirs) {
       return 'mixed';
     } else if (hasMinimalFiles) {
       return 'minimal';
     } else if (hasFullDirs) {
       return 'full';
+    } else if (hasLegacyFiles || hasSkillsOrCommands) {
+      return 'legacy';
     } else {
       return 'unknown';
     }
