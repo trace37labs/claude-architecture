@@ -5,6 +5,61 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.3] - 2026-01-22
+
+### Added
+
+- **Portable Architecture (Export & Gaps Commands)**
+  - `claude-arch export` - Generate portable configuration manifests
+  - `claude-arch gaps` - Analyze environment gaps against manifest
+  - Cross-platform support (darwin, linux, windows)
+  - Setup script generation (--generate-setup flag)
+  - Platform-aware export with intelligent tool filtering
+  - MCP server detection and validation
+  - CLI tool detection with version checking
+  - Environment variable validation
+  - Path existence verification
+  - Hook script validation
+
+### Enhanced
+
+- **Show Command**
+  - `--scope` option now fully functional (user, project, task, system)
+  - `--layer` option for filtering specific layers
+  - Unified sources view with `--show-sources` flag
+  - Better fragmentation detection (project-only, respects user context)
+  - Improved cross-platform path handling
+
+- **Migration Command**
+  - Added `--all` flag for migrating all config sources
+  - Added `--source` flag for selective migration (mcp, hooks, skills, memory)
+  - Better handling of skills and MCP configurations
+
+- **Platform Utilities**
+  - Platform detection (darwin, linux, windows)
+  - Tool-specific install commands per platform
+  - Path mapping between platforms
+  - Shell script generation (bash for Unix, PowerShell for Windows)
+
+### Fixed
+
+- User-level config properly treated as read-only context
+- Fragmentation detection now project-scoped only
+- Better handling of platform-specific tools (e.g., xcodebuild on macOS)
+
+### Documentation
+
+- Updated MISSING_FEATURES.md to reflect implemented features
+- Clarified that export/gaps commands are production-ready
+- Added portable architecture use cases and examples
+
+## [0.1.2] - 2026-01-22
+
+### Enhanced
+
+- Improved scanner for detecting all configuration sources
+- Better universal config source detection
+
 ## [0.1.0] - 2026-01-21
 
 ### Added
@@ -107,15 +162,66 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Clearer precedence chain display
 - Enhanced conflict detection logic
 
+## [0.1.2] - 2026-01-22
+
+### Added
+
+- **Portable Architecture System**
+  - `export` command for generating portable configuration manifests
+  - `gaps` command for analyzing environment differences
+  - Platform-aware export with intelligent tool filtering (darwin, linux, windows)
+  - Automatic path mapping for cross-platform compatibility
+  - Setup script generation (`--generate-setup` flag)
+
+- **Export Command Features**
+  - `--platform` flag for target platform specification
+  - `--generate-setup` creates executable setup.sh scripts
+  - YAML and JSON output formats
+  - Automatic MCP server detection and extraction
+  - CLI tool dependency extraction from AGENTS.md
+  - Environment variable requirement detection
+  - Skills and hooks dependency tracking
+
+- **Gaps Command Features**
+  - Environment gap analysis against manifests
+  - Real-time tool version detection
+  - MCP server installation status checking
+  - Environment variable presence validation
+  - Path existence verification
+  - `--fix` flag shows install commands
+  - JSON output for automation
+
+- **Platform Intelligence**
+  - Platform-specific tool filtering (e.g., xcodebuild only on darwin)
+  - Smart install command generation per platform
+  - Path mapping between platform conventions
+  - Separate setup scripts for Unix (bash) and Windows (PowerShell)
+
+- **Generated Setup Scripts**
+  - Executable bash scripts with color output
+  - `--check-only` flag for dry-run validation
+  - `--skip-optional` flag to skip non-required dependencies
+  - Automatic MCP server installation
+  - CLI tool installation with platform-specific commands
+  - Environment variable setup guidance
+  - Progress tracking and summary reporting
+
+### Documentation
+
+- Complete export/gaps command documentation
+- Platform-aware export examples
+- Cross-platform migration guide
+- Setup script usage instructions
+
 ## [Unreleased]
 
 ### Planned
 
-- Portable architecture (export/gaps commands) for environment migration
-- Platform-aware export (Mac → Linux → Windows)
-- Setup script generation for automated environment setup
+- Windows PowerShell setup script generation
+- Enhanced MCP config parsing
+- Automated dependency resolution
 - Video tutorials and walkthroughs
-- Performance benchmarks
+- Extended performance benchmarks
 
 ---
 

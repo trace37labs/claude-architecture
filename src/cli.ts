@@ -11,6 +11,8 @@ import { migrateCommand } from './commands/migrate.js';
 import { validateCommand } from './commands/validate.js';
 import { showCommand } from './commands/show.js';
 import { doctorCommand } from './commands/doctor.js';
+import { exportCommand } from './commands/export.js';
+import { gapsCommand } from './commands/gaps.js';
 import { logger } from './utils/logger.js';
 
 const program = new Command();
@@ -18,7 +20,7 @@ const program = new Command();
 program
   .name('claude-arch')
   .description('5-layer configuration system for Claude Code')
-  .version('0.1.1');
+  .version('0.1.3');
 
 // Init command
 program
@@ -145,12 +147,56 @@ program
     }
   });
 
+// Export command
+program
+  .command('export')
+  .description('Export portable requirements manifest')
+  .option('-o, --output <file>', 'Output file (default: manifest.yaml)')
+  .option('-p, --platform <platform>', 'Target platform: darwin, linux, or windows')
+  .option('-e, --env <environment>', 'Target environment hints')
+  .option('--json', 'Output as JSON instead of YAML')
+  .option('--generate-setup', 'Generate setup.sh script alongside manifest')
+  .option('-t, --target-dir <path>', 'Directory to export from (default: current)')
+  .action(async (options) => {
+    try {
+      await exportCommand(options);
+    } catch (error) {
+      if (error instanceof Error) {
+        logger.error(error.message);
+      } else {
+        logger.error('An unknown error occurred');
+      }
+      process.exit(1);
+    }
+  });
+
+// Gaps command
+program
+  .command('gaps')
+  .description('Analyze gaps between manifest and current environment')
+  .option('-m, --manifest <file>', 'Manifest file to check against')
+  .option('-f, --from <path>', 'Source project to compare against')
+  .option('--fix', 'Show install commands for missing items')
+  .option('--json', 'Output as JSON')
+  .action(async (options) => {
+    try {
+      await gapsCommand(options);
+    } catch (error) {
+      if (error instanceof Error) {
+        logger.error(error.message);
+      } else {
+        logger.error('An unknown error occurred');
+      }
+      process.exit(1);
+    }
+  });
+
 // Version command (kept for backward compatibility)
 program
   .command('version')
   .description('Show version information')
   .action(() => {
-    console.log('claude-arch v0.1.1');
+    console.log('claude-arch v0.1.3');
   });
 
 program.parse(process.argv);

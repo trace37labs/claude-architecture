@@ -299,6 +299,91 @@ claude-arch doctor --format json
 
 **Note:** User-level config is NOT flagged as fragmentation - it's normal context.
 
+### `export` — Generate portable manifest
+
+Create a manifest of all requirements for deployment to another environment:
+
+```bash
+# Export manifest (auto-detect current platform)
+claude-arch export --output manifest.yaml
+
+# Export for specific target platform
+claude-arch export --output manifest.yaml --platform linux
+
+# Generate setup script alongside manifest
+claude-arch export --output manifest.yaml --generate-setup
+
+# JSON output
+claude-arch export --output manifest.json --json
+```
+
+**What it exports:**
+- MCP servers and their packages
+- CLI tools (with platform-specific filtering)
+- Environment variables
+- Path requirements
+- Skills with dependencies
+- Hooks and scripts
+- Cross-platform path mappings
+
+**Platform-aware export:** When exporting with `--platform`, the tool:
+- Filters out incompatible tools (e.g., excludes xcodebuild when targeting linux)
+- Adjusts install commands for target platform
+- Maps paths appropriately (e.g., `~/Desktop` → `/home/user/Desktop`)
+
+### `gaps` — Analyze environment gaps
+
+Compare current environment against a manifest to find missing dependencies:
+
+```bash
+# Check what's missing
+claude-arch gaps --manifest manifest.yaml
+
+# Show install commands
+claude-arch gaps --manifest manifest.yaml --fix
+
+# JSON output for automation
+claude-arch gaps --manifest manifest.yaml --json
+```
+
+**What it checks:**
+- MCP server installation (~/.claude.json)
+- CLI tool availability (with version detection)
+- Environment variables (set vs not set)
+- Path existence
+- Hook script availability
+
+**Example output:**
+```
+Environment Gap Analysis
+========================
+
+MCP Servers
+✗ github - NOT INSTALLED
+  Install: claude mcp add github -- npx @anthropic/mcp-github
+✓ postgres - installed
+
+CLI Tools
+✗ ffuf - NOT FOUND
+  Install: go install github.com/ffuf/ffuf/v2@latest
+✓ git - available (2.39.0)
+⊘ xcodebuild - SKIPPED (darwin only, current: linux)
+
+Environment Variables
+✗ ANTHROPIC_API_KEY - NOT SET
+✓ GITHUB_TOKEN - set
+
+Summary
+=======
+Required: 2 missing, 5 available
+Optional: 0 missing, 1 available
+```
+
+**Use cases:**
+- **Mac → VPS migration:** Export on Mac, check gaps on VPS, install missing tools
+- **Team onboarding:** New members run `gaps` to see exactly what they need
+- **CI/CD validation:** Automated checks that environment has all required dependencies
+
 ## MCP Server
 
 Integrate with Claude Code directly:
@@ -340,8 +425,10 @@ npm run dev      # Watch mode
 
 ## Status
 
-v0.1.0 — Core functionality complete:
+v0.1.3 — Full feature set complete:
 - 5-layer parser with precedence engine
+- Portable architecture (export/gaps commands)
+- Cross-platform support (darwin, linux, windows)
 - All CLI commands working
 - MCP server integration
 - 332+ tests passing
