@@ -22,6 +22,8 @@ export interface ValidateOptions {
   verbose?: boolean;
   /** Check all configuration sources, not just .claude/ */
   checkAllSources?: boolean;
+  /** Output validation report as JSON */
+  json?: boolean;
 }
 
 export interface ValidationReport {
@@ -51,7 +53,12 @@ export async function validateCommand(options: ValidateOptions = {}): Promise<Va
   const targetDir = options.targetDir || process.cwd();
   const claudeDir = path.join(targetDir, '.claude');
 
-  logger.info(`Validating ${claudeDir}...`);
+  // Suppress logger in JSON mode
+  const showLog = !options.json;
+
+  if (showLog) {
+    logger.info(`Validating ${claudeDir}...`);
+  }
 
   // If checkAllSources enabled, scan and validate ALL config sources
   let sourceIssues: ValidationReport['sourceIssues'] = [];
@@ -59,7 +66,7 @@ export async function validateCommand(options: ValidateOptions = {}): Promise<Va
     const scanResult = scanAllConfigSources({ cwd: targetDir });
     sourceIssues = validateAllSources(scanResult.sources, options.verbose || false);
 
-    if (sourceIssues.length > 0) {
+    if (sourceIssues.length > 0 && showLog) {
       const errors = sourceIssues.filter(i => i.type === 'error');
       const warnings = sourceIssues.filter(i => i.type === 'warning');
 
@@ -88,12 +95,12 @@ export async function validateCommand(options: ValidateOptions = {}): Promise<Va
   // Step 1: Validate directory structure
   const structureResult = await validateStructure(claudeDir);
 
-  if (options.verbose) {
+  if (options.verbose && showLog) {
     logger.info(`Structure type: ${structureResult.structureType}`);
   }
 
   // Report structure errors
-  if (structureResult.errors.length > 0) {
+  if (structureResult.errors.length > 0 && showLog) {
     logger.error(`Found ${structureResult.errors.length} structure error(s):`);
     for (const error of structureResult.errors) {
       logger.error(`  - ${error.message}`);
@@ -104,7 +111,7 @@ export async function validateCommand(options: ValidateOptions = {}): Promise<Va
   }
 
   // Report structure warnings
-  if (structureResult.warnings.length > 0 && options.verbose) {
+  if (structureResult.warnings.length > 0 && options.verbose && showLog) {
     logger.warn(`Found ${structureResult.warnings.length} structure warning(s):`);
     for (const warning of structureResult.warnings) {
       logger.warn(`  - ${warning.message}`);
@@ -120,7 +127,7 @@ export async function validateCommand(options: ValidateOptions = {}): Promise<Va
   if (!options.structureOnly && structureResult.structureType !== 'unknown') {
     schemaResult = await validateSchemas(claudeDir);
 
-    if (schemaResult.errors.length > 0) {
+    if (schemaResult.errors.length > 0 && showLog) {
       logger.error(`Found ${schemaResult.errors.length} schema error(s):`);
       for (const error of schemaResult.errors) {
         logger.error(`  - ${error.file}: ${error.message}`);
@@ -130,7 +137,7 @@ export async function validateCommand(options: ValidateOptions = {}): Promise<Va
       }
     }
 
-    if (schemaResult.warnings.length > 0 && options.verbose) {
+    if (schemaResult.warnings.length > 0 && options.verbose && showLog) {
       logger.warn(`Found ${schemaResult.warnings.length} schema warning(s):`);
       for (const warning of schemaResult.warnings) {
         logger.warn(`  - ${warning.file}: ${warning.message}`);
@@ -140,7 +147,7 @@ export async function validateCommand(options: ValidateOptions = {}): Promise<Va
       }
     }
 
-    if (options.verbose) {
+    if (options.verbose && showLog) {
       logger.info(`Validated ${schemaResult.filesValidated.length} file(s)`);
     }
   }
@@ -168,15 +175,21 @@ export async function validateCommand(options: ValidateOptions = {}): Promise<Va
     sourceIssues: sourceIssues.length > 0 ? sourceIssues : undefined,
   };
 
-  // Summary
-  if (report.valid) {
-    if (totalWarnings === 0) {
-      logger.success('✓ Validation passed with no issues');
-    } else {
-      logger.success(`✓ Validation passed with ${totalWarnings} warning(s)`);
-    }
+  // Summary or JSON output
+  if (options.json) {
+    // Output as JSON
+    console.log(JSON.stringify(report, null, 2));
   } else {
-    logger.error(`✗ Validation failed with ${totalErrors} error(s)`);
+    // Text summary
+    if (report.valid) {
+      if (totalWarnings === 0) {
+        logger.success('✓ Validation passed with no issues');
+      } else {
+        logger.success(`✓ Validation passed with ${totalWarnings} warning(s)`);
+      }
+    } else {
+      logger.error(`✗ Validation failed with ${totalErrors} error(s)`);
+    }
   }
 
   return report;

@@ -20,6 +20,8 @@ export interface ShowOptions {
   targetDir?: string;
   /** Display format: tree, precedence, json, or unified */
   format?: 'tree' | 'precedence' | 'json' | 'unified';
+  /** Show specific scope only */
+  scope?: 'user' | 'project' | 'task' | 'system';
   /** Show specific layer only */
   layer?: LayerType;
   /** Verbose output with full details */
@@ -78,12 +80,33 @@ export async function showCommand(options: ShowOptions = {}): Promise<void> {
   // Step 2: Load configs from all scopes
   const scopeMap = loadAllScopes({ cwd: targetDir });
 
+  // Filter scopes if --scope option provided
+  let filteredScopeMap = scopeMap;
+  if (options.scope) {
+    const scopeFilter = options.scope.toLowerCase();
+    filteredScopeMap = new Map();
+
+    if (scopeFilter === 'task') {
+      const taskScope = scopeMap.get(ScopeLevel.Task);
+      if (taskScope) filteredScopeMap.set(ScopeLevel.Task, taskScope);
+    } else if (scopeFilter === 'project') {
+      const projectScope = scopeMap.get(ScopeLevel.Project);
+      if (projectScope) filteredScopeMap.set(ScopeLevel.Project, projectScope);
+    } else if (scopeFilter === 'user') {
+      const userScope = scopeMap.get(ScopeLevel.User);
+      if (userScope) filteredScopeMap.set(ScopeLevel.User, userScope);
+    } else if (scopeFilter === 'system') {
+      const systemScope = scopeMap.get(ScopeLevel.System);
+      if (systemScope) filteredScopeMap.set(ScopeLevel.System, systemScope);
+    }
+  }
+
   // Step 3: Resolve merged config
   const context = resolveForTask(
-    scopeMap.get(ScopeLevel.Task),
-    scopeMap.get(ScopeLevel.Project),
-    scopeMap.get(ScopeLevel.User),
-    scopeMap.get(ScopeLevel.System)
+    filteredScopeMap.get(ScopeLevel.Task),
+    filteredScopeMap.get(ScopeLevel.Project),
+    filteredScopeMap.get(ScopeLevel.User),
+    filteredScopeMap.get(ScopeLevel.System)
   );
 
   // Step 4: Display based on format
@@ -193,6 +216,11 @@ function displayUnifiedSources(
   const scanResult = scanAllConfigSources({ cwd: targetDir });
   const { sources, existing, fragmentation } = scanResult;
 
+  // Apply scope filter if provided
+  const scopeFilter = options.scope?.toLowerCase();
+  const showUser = !scopeFilter || scopeFilter === 'user';
+  const showProject = !scopeFilter || scopeFilter === 'project';
+
   const c = useColor ? {
     reset: '\x1b[0m',
     bright: '\x1b[1m',
@@ -210,61 +238,71 @@ function displayUnifiedSources(
 
   console.log(`\n${c.bright}=== Active Configuration ===${c.reset}\n`);
 
+  // Determine which layers to show based on --layer filter
+  const showRules = !options.layer || options.layer === 'rules';
+  const showTools = !options.layer || options.layer === 'tools';
+  const showMethods = !options.layer || options.layer === 'methods';
+  const showKnowledge = !options.layer || options.layer === 'knowledge';
+  const showGoals = !options.layer || options.layer === 'goals';
+
   // RULES Layer
-  console.log(`${c.green}${c.bright}RULES${c.reset}`);
+  if (showRules) {
+    console.log(`${c.green}${c.bright}RULES${c.reset}`);
   const rulesCount = [
-    sources.projectClaude && 'CLAUDE.md',
-    sources.projectAgents && 'AGENTS.md',
-    sources.projectSettings && 'settings.json (permissions)',
-    sources.userClaude && '~/.claude/CLAUDE.md',
-    sources.newStructure?.rules.length && '.claude/rules/',
+    showProject && sources.projectClaude && 'CLAUDE.md',
+    showProject && sources.projectAgents && 'AGENTS.md',
+    showProject && sources.projectSettings && 'settings.json (permissions)',
+    showUser && sources.userClaude && '~/.claude/CLAUDE.md',
+    showProject && sources.newStructure?.rules.length && '.claude/rules/',
   ].filter(Boolean).length;
 
   if (rulesCount > 0) {
-    if (sources.newStructure?.rules.length) {
+    if (showProject && sources.newStructure?.rules.length) {
       console.log(`${c.dim}├─${c.reset} [.claude/rules/] New layered structure`);
     }
-    if (sources.projectSettings) {
+    if (showProject && sources.projectSettings) {
       console.log(`${c.dim}├─${c.reset} [${sources.projectSettings}] Permissions enforced`);
     }
-    if (sources.projectClaude) {
+    if (showProject && sources.projectClaude) {
       console.log(`${c.dim}├─${c.reset} [${sources.projectClaude}] Project rules`);
     }
-    if (sources.projectAgents) {
+    if (showProject && sources.projectAgents) {
       console.log(`${c.dim}├─${c.reset} [${sources.projectAgents}] Agent constraints`);
     }
-    if (sources.userClaude) {
+    if (showUser && sources.userClaude) {
       console.log(`${c.dim}└─${c.reset} [${sources.userClaude}] User-level rules`);
     }
   } else {
     console.log(`${c.dim}└─ (none defined)${c.reset}`);
   }
+  }
 
   // TOOLS Layer
+  if (showTools) {
   console.log(`\n${c.cyan}${c.bright}TOOLS${c.reset}`);
   const toolsCount = [
-    sources.userMcpConfig && '~/.claude.json',
-    sources.projectMcp && '.mcp.json',
-    sources.projectSettings && 'settings.json (hooks)',
-    sources.projectSkills.length && 'skills/',
-    sources.projectCommands.length && 'commands/',
-    sources.newStructure?.tools.length && '.claude/tools/',
+    showUser && sources.userMcpConfig && '~/.claude.json',
+    showProject && sources.projectMcp && '.mcp.json',
+    showProject && sources.projectSettings && 'settings.json (hooks)',
+    showProject && sources.projectSkills.length && 'skills/',
+    showProject && sources.projectCommands.length && 'commands/',
+    showProject && sources.newStructure?.tools.length && '.claude/tools/',
   ].filter(Boolean).length;
 
   if (toolsCount > 0) {
-    if (sources.newStructure?.tools.length) {
+    if (showProject && sources.newStructure?.tools.length) {
       console.log(`${c.dim}├─${c.reset} [.claude/tools/] New layered structure`);
     }
-    if (sources.userMcpConfig) {
+    if (showUser && sources.userMcpConfig) {
       console.log(`${c.dim}├─${c.reset} [${sources.userMcpConfig}] MCP servers (global)`);
     }
-    if (sources.projectMcp) {
+    if (showProject && sources.projectMcp) {
       console.log(`${c.dim}├─${c.reset} [project/.mcp.json] MCP servers (project)`);
     }
-    if (sources.projectSettings) {
+    if (showProject && sources.projectSettings) {
       console.log(`${c.dim}├─${c.reset} [${sources.projectSettings}] Hooks: ${sources.projectHooks.length}`);
     }
-    if (sources.projectSkills.length > 0) {
+    if (showProject && sources.projectSkills.length > 0) {
       console.log(`${c.dim}├─${c.reset} [.claude/skills/] ${sources.projectSkills.length} skill(s)`);
       if (options.verbose) {
         sources.projectSkills.forEach(skill => {
@@ -272,7 +310,7 @@ function displayUnifiedSources(
         });
       }
     }
-    if (sources.projectCommands.length > 0) {
+    if (showProject && sources.projectCommands.length > 0) {
       console.log(`${c.dim}└─${c.reset} [.claude/commands/] ${sources.projectCommands.length} command(s)`);
       if (options.verbose) {
         sources.projectCommands.forEach(cmd => {
@@ -283,23 +321,25 @@ function displayUnifiedSources(
   } else {
     console.log(`${c.dim}└─ (none defined)${c.reset}`);
   }
+  }
 
   // METHODS Layer
+  if (showMethods) {
   console.log(`\n${c.magenta}${c.bright}METHODS${c.reset}`);
   const methodsCount = [
-    sources.projectAgents && 'AGENTS.md',
-    sources.projectSkills.length && 'skills/workflows/',
-    sources.newStructure?.methods.length && '.claude/methods/',
+    showProject && sources.projectAgents && 'AGENTS.md',
+    showProject && sources.projectSkills.length && 'skills/workflows/',
+    showProject && sources.newStructure?.methods.length && '.claude/methods/',
   ].filter(Boolean).length;
 
   if (methodsCount > 0) {
-    if (sources.newStructure?.methods.length) {
+    if (showProject && sources.newStructure?.methods.length) {
       console.log(`${c.dim}├─${c.reset} [.claude/methods/] New layered structure`);
     }
-    if (sources.projectAgents) {
+    if (showProject && sources.projectAgents) {
       console.log(`${c.dim}├─${c.reset} [${sources.projectAgents}] Workflows and procedures`);
     }
-    if (sources.projectSkills.length > 0) {
+    if (showProject && sources.projectSkills.length > 0) {
       const totalWorkflows = sources.projectSkills.reduce(
         (sum, s) => sum + (s.workflows?.length || 0), 0
       );
@@ -315,28 +355,30 @@ function displayUnifiedSources(
   } else {
     console.log(`${c.dim}└─ (none defined)${c.reset}`);
   }
+  }
 
   // KNOWLEDGE Layer
+  if (showKnowledge) {
   console.log(`\n${c.blue}${c.bright}KNOWLEDGE${c.reset}`);
   const knowledgeCount = [
-    sources.projectClaude && 'CLAUDE.md',
-    sources.projectAgents && 'AGENTS.md',
-    sources.userMemory.length && '~/.claude/memory/',
-    sources.projectSkills.length && 'skills/references/',
-    sources.newStructure?.knowledge.length && '.claude/knowledge/',
+    showProject && sources.projectClaude && 'CLAUDE.md',
+    showProject && sources.projectAgents && 'AGENTS.md',
+    showUser && sources.userMemory.length && '~/.claude/memory/',
+    showProject && sources.projectSkills.length && 'skills/references/',
+    showProject && sources.newStructure?.knowledge.length && '.claude/knowledge/',
   ].filter(Boolean).length;
 
   if (knowledgeCount > 0) {
-    if (sources.newStructure?.knowledge.length) {
+    if (showProject && sources.newStructure?.knowledge.length) {
       console.log(`${c.dim}├─${c.reset} [.claude/knowledge/] New layered structure`);
     }
-    if (sources.projectClaude) {
+    if (showProject && sources.projectClaude) {
       console.log(`${c.dim}├─${c.reset} [${sources.projectClaude}] Project context`);
     }
-    if (sources.projectAgents) {
+    if (showProject && sources.projectAgents) {
       console.log(`${c.dim}├─${c.reset} [${sources.projectAgents}] Architecture details`);
     }
-    if (sources.projectSkills.length > 0) {
+    if (showProject && sources.projectSkills.length > 0) {
       const totalRefs = sources.projectSkills.reduce(
         (sum, s) => sum + (s.references?.length || 0), 0
       );
@@ -344,7 +386,7 @@ function displayUnifiedSources(
         console.log(`${c.dim}├─${c.reset} [.claude/skills/*/references/] ${totalRefs} reference(s)`);
       }
     }
-    if (sources.userMemory.length > 0) {
+    if (showUser && sources.userMemory.length > 0) {
       console.log(`${c.dim}└─${c.reset} [~/.claude/memory/] ${sources.userMemory.length} file(s)`);
       if (options.verbose) {
         sources.userMemory.forEach(mem => {
@@ -355,13 +397,16 @@ function displayUnifiedSources(
   } else {
     console.log(`${c.dim}└─ (none defined)${c.reset}`);
   }
+  }
 
   // GOALS Layer
+  if (showGoals) {
   console.log(`\n${c.yellow}${c.bright}GOALS${c.reset}`);
-  if (sources.newStructure?.goals.length) {
+  if (showProject && sources.newStructure?.goals.length) {
     console.log(`${c.dim}└─${c.reset} [.claude/goals/] New layered structure`);
   } else {
     console.log(`${c.dim}└─ (none defined)${c.reset}`);
+  }
   }
 
   // Project-level fragmentation warnings (user config is normal context)
@@ -393,12 +438,20 @@ function displayUnifiedSources(
 
   // Summary
   console.log(`\n${c.bright}Summary:${c.reset}`);
-  console.log(`  ${c.dim}•${c.reset} User-level sources: ${existing.userLevel.length}`);
-  console.log(`  ${c.dim}•${c.reset} Project-level sources: ${existing.projectLevel.length}`);
-  console.log(`  ${c.dim}•${c.reset} New structure sources: ${existing.newStructure.length}`);
+  if (showUser) {
+    console.log(`  ${c.dim}•${c.reset} User-level sources: ${existing.userLevel.length}`);
+  }
+  if (showProject) {
+    console.log(`  ${c.dim}•${c.reset} Project-level sources: ${existing.projectLevel.length}`);
+    console.log(`  ${c.dim}•${c.reset} New structure sources: ${existing.newStructure.length}`);
+  }
 
-  if (fragmentation.legacy.length > 0) {
+  if (showProject && fragmentation.legacy.length > 0) {
     console.log(`  ${c.yellow}${c.dim}•${c.reset} ${c.yellow}Legacy files: ${fragmentation.legacy.length}${c.reset}`);
+  }
+
+  if (scopeFilter) {
+    console.log(`  ${c.dim}•${c.reset} Filtered to: ${scopeFilter} scope only`);
   }
 
   console.log();

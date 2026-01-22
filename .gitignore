@@ -43,3 +43,15 @@ ralph_iteration_*.log
 .swarm/
 .mcp.json
 AGENTS.md
+
+# Ralph verification doc spam
+*VERIFICATION*.md
+*READY_FOR*.md
+*FINAL_*.md
+docs/IMPLEMENTATION_STATUS.md
+docs/MISSING_FEATURES.md
+docs/STATUS.md
+
+# Tests (run locally, not needed in repo)
+tests/
+test-output*/

@@ -364,8 +364,12 @@ export function scanAllConfigSources(
   // ========== PROJECT LEVEL ==========
 
   // Find project root (where .claude/ is)
+  // IMPORTANT: Exclude ~/.claude/ - that's user-level, not project
   const projectClaudeDir = findProjectClaudeDirectory(cwd);
-  const projectRoot = projectClaudeDir ? resolve(projectClaudeDir, '..') : cwd;
+  const isUserClaudeDir = projectClaudeDir === join(homeDir, '.claude');
+  const projectRoot = (projectClaudeDir && !isUserClaudeDir)
+    ? resolve(projectClaudeDir, '..')
+    : cwd;
 
   // ./CLAUDE.md (root level)
   const rootClaudeMd = join(projectRoot, 'CLAUDE.md');
@@ -374,8 +378,8 @@ export function scanAllConfigSources(
     existing.projectLevel.push(rootClaudeMd);
   }
 
-  // ./.claude/CLAUDE.md (inside .claude/)
-  if (projectClaudeDir) {
+  // ./.claude/CLAUDE.md (inside .claude/) - only if it's a project .claude/, not user
+  if (projectClaudeDir && !isUserClaudeDir) {
     const claudeDirClaudeMd = join(projectClaudeDir, 'CLAUDE.md');
     if (existsSync(claudeDirClaudeMd)) {
       if (!sources.projectClaude) {
@@ -392,7 +396,8 @@ export function scanAllConfigSources(
     existing.projectLevel.push(agentsMd);
   }
 
-  if (projectClaudeDir) {
+  // Only scan project .claude/ contents if it's NOT the user directory
+  if (projectClaudeDir && !isUserClaudeDir) {
     // ./.claude/settings.json
     const projectSettingsPath = join(projectClaudeDir, 'settings.json');
     if (existsSync(projectSettingsPath)) {

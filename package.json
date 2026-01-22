@@ -1,6 +1,6 @@
 {
   "name": "claude-arch",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "5-layer configuration system for Claude Code",
   "type": "module",
   "main": "./dist/index.js",
@@ -26,12 +26,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/yourusername/claude-arch.git"
+    "url": "git+https://github.com/trace37labs/claude-architecture.git"
   },
   "bugs": {
-    "url": "https://github.com/yourusername/claude-arch/issues"
+    "url": "https://github.com/trace37labs/claude-architecture/issues"
   },
-  "homepage": "https://github.com/yourusername/claude-arch#readme",
+  "homepage": "https://github.com/trace37labs/claude-architecture#readme",
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",

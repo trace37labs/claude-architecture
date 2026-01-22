@@ -31,6 +31,8 @@ export interface DoctorOptions {
   errorsOnly?: boolean;
   /** Show recommendations for improvement */
   recommendations?: boolean;
+  /** Show only quick wins (high impact, easy fixes) */
+  quickWins?: boolean;
   /** Output format: text or json */
   format?: 'text' | 'json';
   /** Disable color output */
@@ -117,9 +119,9 @@ export async function doctorCommand(options: DoctorOptions = {}): Promise<Doctor
   }
   adjustedHealthScore = Math.max(0, Math.min(100, adjustedHealthScore));
 
-  // Step 6: Generate recommendations (if requested)
+  // Step 6: Generate recommendations (if requested or if quick-wins flag)
   let recommendationResults: RecommendationResult | undefined;
-  if (options.recommendations) {
+  if (options.recommendations || options.quickWins) {
     recommendationResults = generateRecommendations(
       context.config,
       context.scopes,
@@ -198,9 +200,13 @@ function displayText(report: DoctorReport, options: DoctorOptions): void {
     displayConflicts(conflicts, options);
   }
 
-  // Display recommendations
+  // Display recommendations (filtered if quick-wins only)
   if (recommendations) {
-    displayRecommendations(recommendations, options);
+    if (options.quickWins) {
+      displayQuickWinsOnly(recommendations, options);
+    } else {
+      displayRecommendations(recommendations, options);
+    }
   }
 
   // Footer
@@ -319,6 +325,30 @@ function displayConflict(conflict: Conflict, options: DoctorOptions): void {
   }
 
   console.log('');
+}
+
+/**
+ * Display only quick wins
+ */
+function displayQuickWinsOnly(
+  recommendations: RecommendationResult,
+  options: DoctorOptions
+): void {
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('🎯 QUICK WINS (High Impact, Easy to Fix):');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('');
+
+  if (recommendations.quickWins.length === 0) {
+    console.log('  No quick wins identified.');
+    console.log('  Run `claude-arch doctor --recommendations` to see all recommendations.');
+    console.log('');
+    return;
+  }
+
+  for (const rec of recommendations.quickWins) {
+    displayRecommendation(rec, options);
+  }
 }
 
 /**

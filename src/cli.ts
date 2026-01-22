@@ -18,7 +18,7 @@ const program = new Command();
 program
   .name('claude-arch')
   .description('5-layer configuration system for Claude Code')
-  .version('0.1.0');
+  .version('0.1.1');
 
 // Init command
 program
@@ -74,6 +74,7 @@ program
   .option('--structure-only', 'Only validate structure, skip schema validation')
   .option('-v, --verbose', 'Verbose output with detailed errors and suggestions')
   .option('--check-all-sources', 'Check all configuration sources, not just .claude/')
+  .option('--json', 'Output validation report as JSON')
   .action(async (options) => {
     try {
       const report = await validateCommand(options);
@@ -96,6 +97,7 @@ program
   .description('Display active configuration with source attribution')
   .option('-t, --target-dir <path>', 'Directory to show config for (default: current)')
   .option('-f, --format <type>', 'Display format: tree, precedence, json, or unified (default: tree)')
+  .option('-s, --scope <scope>', 'Show specific scope only: user, project, task, or system')
   .option('-l, --layer <layer>', 'Show specific layer only')
   .option('-v, --verbose', 'Verbose output with full details')
   .option('-c, --compact', 'Compact output (minimal)')
@@ -123,6 +125,7 @@ program
   .option('-v, --verbose', 'Show detailed conflict information')
   .option('--errors-only', 'Only show errors (no warnings or info)')
   .option('-r, --recommendations', 'Show recommendations for improvement')
+  .option('--quick-wins', 'Show only quick wins (high impact, easy fixes)')
   .option('-f, --format <type>', 'Output format: text or json (default: text)')
   .option('--no-color', 'Disable color output')
   .action(async (options) => {
@@ -147,7 +150,7 @@ program
   .command('version')
   .description('Show version information')
   .action(() => {
-    console.log('claude-arch v0.1.0');
+    console.log('claude-arch v0.1.1');
   });
 
 program.parse(process.argv);
