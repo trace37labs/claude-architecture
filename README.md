@@ -194,13 +194,11 @@ npm run format
 - ✅ npm package ready
 
 **In Progress:**
-- 📝 User documentation
 - 📝 Video tutorials
-- 📝 Community proposal to Anthropic
 
 ## Contributing
 
-This is an open proposal. Feedback welcome via issues and discussions.
+Feedback welcome via issues and discussions.
 
 ## License
 
@@ -208,4 +206,4 @@ MIT
 
 ---
 
-*A proposal to bring architectural clarity to the Claude ecosystem.*
+*Bringing clarity to Claude Code configuration.*

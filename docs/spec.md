@@ -430,11 +430,6 @@ This completely replaces any inherited deployment method.
 - [ ] Example projects
 - [ ] Community adoption
 
-### Phase 5: Proposal
-- [ ] Write up for Anthropic
-- [ ] Gather community support
-- [ ] Propose as standard
-
 ---
 
 ## 8. Examples
@@ -519,4 +514,4 @@ enterprise-app/
 
 ---
 
-*This specification is a draft proposal for community discussion.*
+*This specification provides a clear mental model for Claude Code configuration.*
