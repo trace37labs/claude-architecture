@@ -21,7 +21,7 @@ const program = new Command();
 program
   .name('claude-arch')
   .description('5-layer configuration system for Claude Code')
-  .version('0.1.10');
+  .version('0.1.11');
 
 // Init command
 program
