@@ -66,7 +66,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - User documentation (migration guide, best practices, troubleshooting)
 - Video tutorials and walkthroughs
 - Performance benchmarks
-- Community proposal to Anthropic for standardization
 - npm package distribution
 
 ---
