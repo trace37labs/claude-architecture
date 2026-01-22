@@ -1,0 +1,11 @@
+{
+  "timestamp": "2026-01-22T00:12:30.304Z",
+  "projectRoot": "/Users/paulreed/claude-architecture",
+  "structure": {
+    "hasPackageJson": true,
+    "hasTsConfig": true,
+    "hasClaudeConfig": true,
+    "hasClaudeFlow": true
+  },
+  "scannedAt": 1769040750304
+}
