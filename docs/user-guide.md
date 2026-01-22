@@ -299,6 +299,74 @@ Active: project/.claude/methods/workflow.md
 
 ---
 
+### `claude-arch tree`
+
+Display the `.claude/` directory structure as a visual tree.
+
+```bash
+# Show .claude/ directory tree
+claude-arch tree
+
+# Limit depth
+claude-arch tree --depth 2
+
+# Show file sizes
+claude-arch tree --size
+
+# Show hidden files
+claude-arch tree --all
+
+# Disable color output
+claude-arch tree --no-color
+
+# Show tree for specific directory
+claude-arch tree --target-dir ./my-project
+```
+
+**Example output**:
+```
+.claude/
+├── rules/
+│   ├── security.md (1.2K)
+│   └── constraints.md (856B)
+├── tools/
+│   ├── mcp.yaml (542B)
+│   └── hooks.yaml (1.1K)
+├── methods/
+│   ├── workflows/
+│   │   ├── testing.md (2.3K)
+│   │   └── deployment.md (1.8K)
+│   └── patterns.md (3.4K)
+├── knowledge/
+│   ├── architecture.md (5.6K)
+│   └── api-docs.md (4.2K)
+└── goals/
+    └── current-sprint.md (892B)
+
+5 directories, 10 files
+```
+
+**Options**:
+- `--depth N` — Limit tree traversal to N levels deep
+- `--size` — Show file sizes in human-readable format (B, K, M)
+- `--all` — Include hidden files and directories
+- `--no-color` — Disable color output for piping to files
+- `--target-dir PATH` — Show tree for directory other than current
+
+**Features**:
+- Color-coded files: directories (blue), markdown (green), YAML/JSON (yellow)
+- Automatic sorting: directories first, then alphabetical
+- Summary counts of directories and files
+- Human-readable file sizes
+
+**When to use**:
+- Quick visual overview of project structure
+- Verifying migration results
+- Documentation and screenshots
+- Understanding .claude/ organization
+
+---
+
 ### `claude-arch doctor`
 
 Health check for configuration issues and recommendations.

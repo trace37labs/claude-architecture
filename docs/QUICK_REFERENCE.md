@@ -158,15 +158,43 @@ Tested on production iOS app project with:
 
 Result: Clear, accurate, actionable output with zero false positives.
 
-## 📝 Next Commands (Coming Soon)
+## 📝 Additional Commands
 
+### View Directory Structure
 ```bash
-# Validate all config (in progress)
+# Display .claude/ as visual tree
+claude-arch tree
+
+# With file sizes
+claude-arch tree --size
+
+# Limit depth
+claude-arch tree --depth 2
+```
+
+### Validate Configuration
+```bash
+# Validate all config
 claude-arch validate
 
-# Migrate project legacy files (in progress)
+# Check all sources
+claude-arch validate --check-all-sources
+```
+
+### Migrate Legacy Files
+```bash
+# Migrate project legacy files
 claude-arch migrate --all
 
-# Health check with fixes (not started)
+# Preview migration
+claude-arch migrate --all --dry-run
+```
+
+### Health Check
+```bash
+# Full health check
 claude-arch doctor
+
+# Quick wins only
+claude-arch doctor --quick-wins
 ```

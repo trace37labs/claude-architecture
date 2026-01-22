@@ -262,6 +262,40 @@ Summary:
 • New structure sources: 5
 ```
 
+### `tree` — View directory structure
+
+```bash
+# Display .claude/ directory as visual tree
+claude-arch tree
+
+# Show file sizes
+claude-arch tree --size
+
+# Limit depth
+claude-arch tree --depth 2
+
+# Show hidden files
+claude-arch tree --all
+```
+
+**Example output:**
+```
+.claude/
+├── rules/
+│   ├── security.md (1.2K)
+│   └── constraints.md (856B)
+├── tools/
+│   └── mcp.yaml (542B)
+├── methods/
+│   └── workflows.md (2.3K)
+├── knowledge/
+│   └── architecture.md (5.6K)
+└── goals/
+    └── current.md (892B)
+
+5 directories, 6 files
+```
+
 ### `doctor` — Health check
 
 ```bash
