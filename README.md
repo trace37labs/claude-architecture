@@ -6,19 +6,23 @@ A tool that scans ALL your Claude Code configuration (10+ sources) and shows you
 
 ## Quick Start
 
-**1. See what's active right now:**
+**1. Install:**
 ```bash
-npx claude-arch show --show-sources
+npm install -g claude-arch
 ```
 
-**2. Health check your config:**
-```bash
-npx claude-arch doctor
-```
-
-**3. (Optional) Add MCP server so Claude can query config during conversations:**
+**2. Add MCP server (so Claude can use these tools during conversations):**
 ```bash
 claude mcp add claude-arch -- npx claude-arch-mcp
+```
+
+That's it. Claude can now query your configuration directly.
+
+**CLI commands (optional, for manual use):**
+```bash
+claude-arch show --show-sources   # See all active config
+claude-arch doctor                # Health check
+claude-arch migrate --all         # Convert legacy files
 ```
 
 ## The Problem
