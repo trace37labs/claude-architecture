@@ -422,9 +422,23 @@ async function createFullMigration(
     });
 
     // Display tree recursively
+    // Canonical layer order: rules → tools → methods → knowledge → goals
+    const LAYER_ORDER = ['rules', 'tools', 'methods', 'knowledge', 'goals'];
+
     function displayTree(node: TreeNode, prefix: string = '  ') {
-      // Display directories first
-      const dirs = Array.from(node.children.entries()).sort(([a], [b]) => a.localeCompare(b));
+      // Display directories in canonical layer order (non-layers sorted alphabetically after)
+      const dirs = Array.from(node.children.entries()).sort(([a], [b]) => {
+        const aIdx = LAYER_ORDER.indexOf(a);
+        const bIdx = LAYER_ORDER.indexOf(b);
+        // Both are layers - sort by layer order
+        if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
+        // Only a is a layer - it comes first
+        if (aIdx !== -1) return -1;
+        // Only b is a layer - it comes first
+        if (bIdx !== -1) return 1;
+        // Neither are layers - alphabetical
+        return a.localeCompare(b);
+      });
       dirs.forEach(([name, child], idx) => {
         const isLastDir = idx === dirs.length - 1 && node.files.length === 0;
         const branch = isLastDir ? '└──' : '├──';
