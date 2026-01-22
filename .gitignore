@@ -33,3 +33,13 @@ pnpm-debug.log*
 # Temporary files
 *.tmp
 .cache/
+
+# Development artifacts (Ralph loop, claude-flow)
+loop.sh
+PROMPT_*.md
+IMPLEMENTATION_PLAN.md
+ralph_iteration_*.log
+.claude-flow/
+.swarm/
+.mcp.json
+AGENTS.md
